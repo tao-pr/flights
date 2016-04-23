@@ -8,8 +8,8 @@ class Airline (_id: Long, _name: String, _country: String){
 	var country: String = _country
 }
 
-class Airport (_id: Long, _name: String, _city: String, _country: String, _lat: Float, _lng: Float){
-	var id: Long = _id
+class Airport (_code: String, _name: String, _city: String, _country: String, _lat: Float, _lng: Float){
+	var code: String = _code
 	var name: String = _name
 	var city: String = _city
 	var country: String = _country
@@ -33,12 +33,13 @@ object OpenFlights{
 		}
 	}
 
-	def loadAirports(): List[Airport] = {
-		// TAOTODO: Load airports data from file
-		List[Airport]()
+	def loadAirports(path: String): List[Airport] = {
+		val records = loadCSVDataFile(path)
+		records.foldLeft(List[Airport]()) { (list, n) =>
+			list ++ List(new Airport(n(4),n(1),n(2),n(3),n(6).toFloat,n(7).toFloat))
+		}
 	}
 
 	val airlines = loadAirlines("../../../data/openflights/airlines.dat")
-	val airports = loadAirports()
-
+	val airports = loadAirports("../../../data/openflights/airports.dat")
 }
