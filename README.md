@@ -20,4 +20,9 @@ just `sbt` to build and run the project is fine.
 
 ## License
 
-MIT license.
+[MIT License](https://opensource.org/licenses/MIT)
+
+Copyright (C) StarColon Projects.
+
+
+
