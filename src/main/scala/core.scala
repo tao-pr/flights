@@ -1,10 +1,10 @@
-package com.starcolon.flights.core
+package starcolon.flights.core
 
 /**
  * Core module of Flights
  */
 object Core {
   def main(args: Array[String]) {
-  	
+
   }
 }
