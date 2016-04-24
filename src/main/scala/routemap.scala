@@ -30,10 +30,12 @@ object RouteMap{
 	def findCityRoutes(citySrc: String, cityDest: String): List[Route] = {
 		val srcAirports = findAirports(citySrc)
 		val dstAirports = findAirports(cityDest)
-		for {src <- srcAirports}
-			for {dst <- dstAirports}
-				for {r <- findAirportRoutes(src.code,dst.code)}
-					yield r
+
+		srcAirports.foldLeft(List[Route]()) { (route,src) =>
+			route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
+				findAirportRoutes(src.code,dst.code)
+			}
+		}
 	}
 
 	/**
