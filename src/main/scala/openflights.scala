@@ -25,6 +25,9 @@ class Airport (_code: String, _name: String, _city: String, _country: String, _l
 		println("🏠 " + Console.CYAN + name + " (" + code + ") " + 
 			Console.WHITE + city + "/" + country + Console.RESET)
 	}
+
+	def isIn(_city: String) = city==_city
+	def isInCountry(_cn: String) = country==_cn
 }
 
 class Route (_airlineCode: String, _srcCode: String, _destCode: String, _stops: Int){

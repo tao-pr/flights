@@ -1,7 +1,17 @@
 package starcolon.flights.geo
 
 object Geo{
-	def distance(lat1: Float, lng1: Float, lat2: Float, lng2: Float): Float{
-	
+	/**
+	 * Calculates a distance between two locations
+	 * returns distance in metres
+	 */
+	def distance(lat1: Float, lng1: Float, lat2: Float, lng2: Float): Float = {
+		val dlat = 111540 * (lat1 - lat2)
+		val dlng = 111320 * Math.cos(lat1) * (lng2 - lng1)
+
+		val flat = dlat.toFloat
+		val flng = dlng.toFloat
+
+		Math.sqrt( flat*flat + flng*flng).toFloat
 	}
 }
