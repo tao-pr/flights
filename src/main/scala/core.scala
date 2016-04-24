@@ -9,7 +9,7 @@ object Core {
 
   def main(args: Array[String]) {
   	// Test finding route between two cities
-  	println("Airports in Bangkok")
-  	RouteMap.findAirports("Bangkok") foreach (n => n.prettyPrint)
+  	println("Routes Bangkok -> Sydney")
+  	RouteMap.findCityRoutes("Bangkok","Sydney") foreach (r => r.prettyPrint)
   }
 }

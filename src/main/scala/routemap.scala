@@ -28,12 +28,25 @@ object RouteMap{
 	 * Find all routes between two cities
 	 */
 	def findCityRoutes(citySrc: String, cityDest: String): List[Route] = {
-		val srcAirports = findAirports(citySrc)
-		val dstAirports = findAirports(cityDest)
+		val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
+		val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
+
+		// TAODEBUG:
+		println(Console.CYAN + "@ Source Airports: " + Console.RESET)
+		srcAirports foreach {n => n.prettyPrint}
+		println(Console.CYAN + "@ Dest Airports:" + Console.RESET)
+		dstAirports foreach {n => n.prettyPrint}
 
 		srcAirports.foldLeft(List[Route]()) { (route,src) =>
 			route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
-				findAirportRoutes(src.code,dst.code)
+				val r = findAirportRoutes(src.code,dst.code)
+				
+				// TAODEBUG:
+				println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
+				println(r.length + " routes")
+				r foreach {n => n.prettyPrint}
+
+				_route ++ r				
 			}
 		}
 	}

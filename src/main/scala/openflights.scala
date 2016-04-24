@@ -26,6 +26,7 @@ class Airport (_code: String, _name: String, _city: String, _country: String, _l
 			Console.WHITE + city + "/" + country + Console.RESET)
 	}
 
+	def isValidAirport() = code.length>0
 	def isIn(_city: String) = city==_city
 	def isInCountry(_cn: String) = country==_cn
 }
