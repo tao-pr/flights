@@ -19,13 +19,13 @@ object Geo{
 	 * Convert a distance in metre from a location to delta lattitude
 	 */
 	def metreToDeltaLat(lat0: Float, lng0: Float, dist: Float): Float = {
-		0.707 * dist / 111540
+		(0.707 * dist / 111540).toFloat
 	}
 
 	/**
 	 * Convert a distance in metre from a location to delta longitude
 	 */
 	def metreToDeltaLng(lat0: Float, lng0: Float, dist: Float): Float = {
-		0.707 * dist / 111320
+		(0.707 * dist / 111320).toFloat
 	}
 }

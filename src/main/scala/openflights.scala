@@ -41,6 +41,14 @@ class Route (_airlineCode: String, _srcCode: String, _destCode: String, _stops: 
 			Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " + 
 			Console.WHITE + numStops.toString + " stops" + Console.RESET)
 	}
+
+	def startsAt(_airportCode: String) = airportSourceCode == _airportCode
+	def endsAt(_airportCode: String) = airportDestCode == _airportCode
+	def isBetween(_srcAirportCode: String, _dstAirportCode: String):Boolean = {
+		airportSourceCode == _srcAirportCode && 
+		airportDestCode == _dstAirportCode
+	}
+	def isOperatedBy(_airline: String) = airlineCode==_airline
 }
 
 /**
