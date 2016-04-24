@@ -5,9 +5,11 @@ package starcolon.flights.core
  */
 object Core {
 	import starcolon.flights.openflights._
+	import starcolon.flights.routemap._
+
   def main(args: Array[String]) {
-  	val airlines = OpenFlights.airlines
-  	val airports = OpenFlights.airports
-  	val routes   = OpenFlights.routes
+  	// Test finding route between two cities
+  	println("Airports in Bangkok")
+  	RouteMap.findAirports("Bangkok") foreach (n => n.prettyPrint)
   }
 }

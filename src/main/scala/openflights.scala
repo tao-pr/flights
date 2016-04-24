@@ -4,9 +4,9 @@ import scala.collection.immutable.List
 
 class Airline (_id: Long, _code: String, _name: String, _country: String){
 	var id: Long = _id
-	var code: String = _code
-	var name: String = _name
-	var country: String = _country
+	var code: String = _code.replace("\"","")
+	var name: String = _name.replace("\"","")
+	var country: String = _country.replace("\"","")
 
 	def prettyPrint(){
 		println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
@@ -14,10 +14,10 @@ class Airline (_id: Long, _code: String, _name: String, _country: String){
 }
 
 class Airport (_code: String, _name: String, _city: String, _country: String, _lat: Float, _lng: Float){
-	var code: String = _code
-	var name: String = _name
-	var city: String = _city
-	var country: String = _country
+	var code: String = _code.replace("\"","")
+	var name: String = _name.replace("\"","")
+	var city: String = _city.replace("\"","")
+	var country: String = _country.replace("\"","")
 	var lat: Float = _lat
 	var lng: Float = _lng
 
@@ -31,9 +31,9 @@ class Airport (_code: String, _name: String, _city: String, _country: String, _l
 }
 
 class Route (_airlineCode: String, _srcCode: String, _destCode: String, _stops: Int){
-	var airlineCode: String = _airlineCode
-	var airportSourceCode: String = _srcCode
-	var airportDestCode: String = _destCode
+	var airlineCode: String = _airlineCode.replace("\"","")
+	var airportSourceCode: String = _srcCode.replace("\"","")
+	var airportDestCode: String = _destCode.replace("\"","")
 	var numStops: Int = _stops
 
 	def prettyPrint(){
