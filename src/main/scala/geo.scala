@@ -14,4 +14,18 @@ object Geo{
 
 		Math.sqrt( flat*flat + flng*flng).toFloat
 	}
+
+	/**
+	 * Convert a distance in metre from a location to delta lattitude
+	 */
+	def metreToDeltaLat(lat0: Float, lng0: Float, dist: Float): Float = {
+		0.707 * dist / 111540
+	}
+
+	/**
+	 * Convert a distance in metre from a location to delta longitude
+	 */
+	def metreToDeltaLng(lat0: Float, lng0: Float, dist: Float): Float = {
+		0.707 * dist / 111320
+	}
 }
