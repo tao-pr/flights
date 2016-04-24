@@ -7,7 +7,7 @@ object Core {
 	import starcolon.flights.openflights._
   def main(args: Array[String]) {
   	val airlines = OpenFlights.airlines
-
-		airlines foreach { a => a.prettyPrint() } 
+  	val airports = OpenFlights.airports
+  	val routes   = OpenFlights.routes
   }
 }
