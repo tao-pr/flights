@@ -42,7 +42,6 @@ object RouteMap{
 			route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
 				val r = findAirportRoutes(src.code,dst.code)
 				
-				// TAODEBUG:
 				println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
 				println(r.length + " routes")
 				r foreach {n => n.prettyPrint}
@@ -51,6 +50,23 @@ object RouteMap{
 			}
 		}
 	}
+
+	/**
+	 * Find indirect routes which connect two cities
+	 */
+	def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[Route] = {
+		val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
+		val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
+
+		println(Console.CYAN + "@ Source Airports: " + Console.RESET)
+		srcAirports foreach {n => n.prettyPrint}
+		println(Console.CYAN + "@ Dest Airports:" + Console.RESET)
+		dstAirports foreach {n => n.prettyPrint}
+
+		// TAOTODO:
+	
+		return List[Route]()
+	} 
 
 	/**
 	 * Find all routes between two airports
