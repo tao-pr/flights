@@ -1,6 +1,7 @@
 package starcolon.flights.routemap
 
 import starcolon.flights.openflights._
+import starcolon.flights.geo._
 
 /**
  * Route mapper/finder utility
