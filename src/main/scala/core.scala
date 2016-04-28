@@ -6,6 +6,7 @@ package starcolon.flights.core
 object Core {
 	import starcolon.flights.openflights._
 	import starcolon.flights.routemap._
+	import starcolon.flights.geo._
 	import scala.io.StdIn.{readLine,readInt}
 
   def main(args: Array[String]) {
@@ -22,15 +23,16 @@ object Core {
 
 		println(citySource + " ✈ ️ " + cityDest)
 
-		// Find routes between two cities
+		// Find direct flights between two cities
 		val routesDirect = RouteMap.findCityRoutes(citySource,cityDest)
-		val routesIndirect = RouteMap.findCityIndirectRoutes(citySource,cityDest,maxDegree)
-
-		// Print outputs
 		println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
 		routesDirect foreach {r => r.prettyPrint}
 
+		// Find indirect flights between two cities
+		val routesIndirect = RouteMap.findCityIndirectRoutes(citySource,cityDest,maxDegree)
 		println(Console.MAGENTA + "[Indirect flights]" + Console.RESET)
+
+		// TAOTODO:
 		routesIndirect foreach {r => r.prettyPrint}
   }	
 }

@@ -1,26 +1,15 @@
 package starcolon.flights.openflights
 
-import scala.collection.immutable.List
+import starcolon.flights.geo.Geo
+import scala.collection.mutable.Map
 
-class Airline (_id: Long, _code: String, _name: String, _country: String){
-	var id: Long = _id
-	var code: String = _code.replace("\"","")
-	var name: String = _name.replace("\"","")
-	var country: String = _country.replace("\"","")
-
+case class Airline (id: Long, code: String, name: String, country: String){
 	def prettyPrint(){
 		println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
 	}
 }
 
-class Airport (_code: String, _name: String, _city: String, _country: String, _lat: Float, _lng: Float){
-	var code: String = _code.replace("\"","")
-	var name: String = _name.replace("\"","")
-	var city: String = _city.replace("\"","")
-	var country: String = _country.replace("\"","")
-	var lat: Float = _lat
-	var lng: Float = _lng
-
+case class Airport (code: String, name: String, city: String, country: String, lat: Float, lng: Float){
 	def prettyPrint(){
 		println("🏠 " + Console.CYAN + name + " (" + code + ") " + 
 			Console.WHITE + city + "/" + country + Console.RESET)
@@ -31,12 +20,7 @@ class Airport (_code: String, _name: String, _city: String, _country: String, _l
 	def isInCountry(_cn: String) = country==_cn
 }
 
-class Route (_airlineCode: String, _srcCode: String, _destCode: String, _stops: Int){
-	var airlineCode: String = _airlineCode.replace("\"","")
-	var airportSourceCode: String = _srcCode.replace("\"","")
-	var airportDestCode: String = _destCode.replace("\"","")
-	var numStops: Int = _stops
-
+case class Route (airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int){
 	def prettyPrint(){
 		println(Console.CYAN + airlineCode + " ✈️ " + 
 			Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " + 
@@ -65,7 +49,12 @@ object OpenFlights{
 	def loadAirlines(path: String): List[Airline] = {
 		val records = loadCSVDataFile(path)
 		records.foldLeft(List[Airline]()) { (list, n) =>
-			list ++ List(new Airline(n(0).toLong,n(4),n(1),n(6)))
+			list ++ List(Airline(
+				n(0).toLong,
+				n(4).replace("\"",""),
+				n(1).replace("\"",""),
+				n(6).replace("\"","")
+			))
 		}
 	}
 
@@ -76,16 +65,35 @@ object OpenFlights{
 				// In case the city has a comma,
 				// it will be unintentionally splitted so we have
 				// one extra element in the splitted array.
-				list ++ List(new Airport(n(4),n(1),n(2)+", "+n(3),n(4),n(7).toFloat,n(8).toFloat))
+				list ++ List(Airport(
+					n(4).replace("\"",""),
+					n(1).replace("\"",""),
+					(n(2)+", "+n(3)).replace("\"",""),
+					n(4).replace("\"",""),
+					n(7).toFloat,
+					n(8).toFloat
+				))
 			else
-				list ++ List(new Airport(n(4),n(1),n(2),n(3),n(6).toFloat,n(7).toFloat))
+				list ++ List(Airport(
+					n(4).replace("\"",""),
+					n(1).replace("\"",""),
+					n(2).replace("\"",""),
+					n(3).replace("\"",""),
+					n(6).toFloat,
+					n(7).toFloat
+				))
 		}
 	}
 
 	def loadRoutes(path: String): List[Route] = {
 		val records = loadCSVDataFile(path)
 		records.foldLeft(List[Route]()) { (list, n) => 
-			list ++ List(new Route(n(0),n(2),n(4),n(7).toInt))
+			list ++ List(Route(
+				n(0).replace("\"",""),
+				n(2).replace("\"",""),
+				n(4).replace("\"",""),
+				n(7).toInt
+			))
 		}
 	}
 
