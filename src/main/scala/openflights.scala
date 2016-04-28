@@ -58,6 +58,22 @@ object OpenFlights{
 		}
 	}
 
+	def loadAirportsAsMap(path: String): Map[String,Airport] = {
+		val records = loadCSVDataFile(path)
+		records.foldLeft(Map[String,Airport]()){ (map,n) =>
+			val code    = n(4).replace("\"","")
+			val airport = Airport(
+					n(4).replace("\"",""),
+					n(1).replace("\"",""),
+					(n(2)+", "+n(3)).replace("\"",""),
+					n(4).replace("\"",""),
+					n(7).toFloat,
+					n(8).toFloat
+				)
+			map(code) = airport
+		}
+	}
+
 	def loadAirports(path: String): List[Airport] = {
 		val records = loadCSVDataFile(path)
 		records.foldLeft(List[Airport]()) { (list, n) =>
