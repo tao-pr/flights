@@ -1,5 +1,7 @@
 package starcolon.flights.openflights
 
+import java.io.InputStream
+
 import starcolon.flights.geo.Geo
 import scala.collection.mutable.Map
 
@@ -41,9 +43,10 @@ case class Route (airlineCode: String, airportSourceCode: String, airportDestCod
  */
 object OpenFlights{
 	def loadCSVDataFile(path: String): List[Array[String]] = {
-		val lines   = io.Source.fromFile(path).getLines
+		val stream: InputStream = getClass.getResourceAsStream(path)
+		val lines = io.Source.fromInputStream(stream).getLines
 		val records = lines.map { line => line.split(",").map(_.trim) }
-		return records.toList
+		records.toList
 	}
 
 	def loadAirlines(path: String): List[Airline] = {
@@ -113,7 +116,7 @@ object OpenFlights{
 		}
 	}
 
-	val airlines = loadAirlines("./data/openflights/airlines.dat")
-	val airports = loadAirports("./data/openflights/airports.dat")
-	var routes   = loadRoutes("./data/openflights/routes.dat")
+	val airlines = loadAirlines("/data/openflights/airlines.dat")
+	val airports = loadAirports("/data/openflights/airports.dat")
+	var routes   = loadRoutes("/data/openflights/routes.dat")
 }
