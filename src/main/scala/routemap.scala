@@ -36,16 +36,6 @@ object RouteMap{
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
-    println(Console.CYAN + "====================" + Console.RESET)
-    println(Console.CYAN + "@ Source Airports: " + Console.RESET)
-    println(Console.CYAN + "====================" + Console.RESET)
-    srcAirports foreach {n => n.prettyPrint}
-    
-    println(Console.CYAN + "====================" + Console.RESET)
-    println(Console.CYAN + "@ Dest Airports:" + Console.RESET)
-    println(Console.CYAN + "====================" + Console.RESET)
-    dstAirports foreach {n => n.prettyPrint}
-
     srcAirports.foldLeft(List[Route]()) { (route,src) =>
       route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
         val r = findAirportRoutes(src.code,dst.code)
@@ -65,12 +55,7 @@ object RouteMap{
   def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[Route] = {
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
-
-    println(Console.CYAN + "@ Source Airports: " + Console.RESET)
-    srcAirports foreach {n => n.prettyPrint}
-    println(Console.CYAN + "@ Dest Airports:" + Console.RESET)
-    dstAirports foreach {n => n.prettyPrint}
-
+    
     // TAOTODO:
   
     return List[Route]()
