@@ -19,17 +19,6 @@ object RouteMap{
   }
 
   /**
-   * Find all cities available to fly in a country
-   */
-  // def findCities(country: String): List[String] = {
-  //  OpenFlights.airports
-  //    .filter(_.isInCountry(country))
-  //    .map(_.city)
-  //    .toSet
-  //    .toList
-  // }
-
-  /**
    * Find all routes between two cities
    */
   def findCityRoutes(citySrc: String, cityDest: String): List[Route] = {
@@ -55,7 +44,7 @@ object RouteMap{
   def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[Route] = {
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
-    
+
     // TAOTODO:
   
     return List[Route]()
@@ -73,10 +62,4 @@ object RouteMap{
       return List[Route]()
   }
 
-  /**
-   * Find all routes operated by an airway
-   */
-  // def findAirwayRoutes(airway: String): List[Route] = {
-  //  OpenFlights.routes.filter(_.isOperatedBy(airway))
-  // }
 }
