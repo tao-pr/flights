@@ -27,10 +27,6 @@ object RouteMap{
     srcAirports.foldLeft(List[Route]()) { (route,src) =>
       route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
         val r = findAirportRoutes(src.code, dst.code)
-        
-        // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
-        // println(r.length + " routes")
-        // r foreach {n => n.prettyPrint}
         _route ++ r
       }
     }
@@ -47,11 +43,6 @@ object RouteMap{
     srcAirports.foldLeft(List[Route]()) { (route,src) =>
       route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) =>
         val r = findIndirectAirportRoutes(src.code, dst.code, maxDegree)
-
-        // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
-        // println(r.length + " routes")
-        // r foreach {n => n.prettyPrint}
-
         _route ++ r
       }
     }
