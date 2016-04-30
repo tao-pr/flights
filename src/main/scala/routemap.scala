@@ -32,7 +32,6 @@ object RouteMap{
         // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
         // println(r.length + " routes")
         // r foreach {n => n.prettyPrint}
-
         _route ++ r
       }
     }
