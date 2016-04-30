@@ -12,9 +12,9 @@ case class Airline (id: Long, code: String, name: String, country: String){
 }
 
 case class Airport (code: String, name: String, city: String, country: String, lat: Float, lng: Float){
+  def prettyPrint(): Unit = {
     println("🏠 " + Console.CYAN + name + " (" + code + ") " + 
       Console.WHITE + city + "/" + country + Console.RESET)
-  def prettyPrint(): Unit = {
   }
 
   def isValidAirport() = code.length>0

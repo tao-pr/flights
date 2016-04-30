@@ -11,7 +11,6 @@ object RouteMap{
    * Find all airports located in a particular city
    */
   def findAirports(city: String): List[Airport] = {
-    ///OpenFlights.airports.filter(_.isIn(city))
     if (OpenFlights.airports.contains(city))
       return OpenFlights.airports(city)
     else
