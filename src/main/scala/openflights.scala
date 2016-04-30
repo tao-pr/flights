@@ -41,6 +41,15 @@ case class Route (airlineCode: String, airportSourceCode: String, airportDestCod
 case class RouteKey(airportSourceCode: String, airportDestCode: String)
 
 /**
+ * Another version of Route class with geolocations
+ */
+case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, dstLng: Float){
+  // Distance in metres between the source airport
+  // and the destination airport
+  def distance() = Geo.distance(srcLat, srcLng, dstLat, dstLng)
+}
+
+/**
  * OpenFlights data source handler
  */
 object OpenFlights{

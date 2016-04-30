@@ -27,11 +27,11 @@ object RouteMap{
 
     srcAirports.foldLeft(List[Route]()) { (route,src) =>
       route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
-        val r = findAirportRoutes(src.code,dst.code)
+        val r = findAirportRoutes(src.code, dst.code)
         
-        println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
-        println(r.length + " routes")
-        r foreach {n => n.prettyPrint}
+        // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
+        // println(r.length + " routes")
+        // r foreach {n => n.prettyPrint}
 
         _route ++ r
       }
@@ -45,21 +45,41 @@ object RouteMap{
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
-    // TAOTODO:
+    // Examine each pair of the src-dst airports
+    srcAirports.foldLeft(List[Route]()) { (route,src) =>
+      route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) =>
+        val r = findIndirectAirportRoutes(src.code, dst.code, maxDegree)
+
+        // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
+        // println(r.length + " routes")
+        // r foreach {n => n.prettyPrint}
+
+        _route ++ r
+      }
+    }
   
     return List[Route]()
   } 
 
   /**
-   * Find all routes between two airports
+   * Find all direct routes between two airports
    */
   def findAirportRoutes(airportSrc: String, airportDest: String): List[Route] = {
-    //OpenFlights.routes.filter(_.isBetween(airportSrc,airportDest))
     val key = RouteKey(airportSrc,airportDest)
     if (OpenFlights.routes.contains(key))
       return OpenFlights.routes(key)
     else
       return List[Route]()
+  }
+
+  /**
+   * Find all indirect routes between two airports
+   * There is at least one connecting airport between the two.
+   */
+  def findIndirectAirportRoutes(airportSrc: String, airportDest: String, maxDegree: Int): List[Route] = {
+
+    // TAOTODO:
+    return List[Route]()
   }
 
 }
