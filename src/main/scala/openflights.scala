@@ -60,14 +60,14 @@ object OpenFlights {
    */
   val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
 
-  def loadCSVDataFile(path: String): List[Array[String]] = {
+  private def loadCSVDataFile(path: String): List[Array[String]] = {
     val stream: InputStream = getClass.getResourceAsStream(path)
     val lines = io.Source.fromInputStream(stream).getLines
     val records = lines.map { line => line.split(",").map(_.trim) }
     records.toList
   }
 
-  def loadAirlinesAsMap(path: String): Map[String, List[Airline]] = {
+  private def loadAirlinesAsMap(path: String): Map[String, List[Airline]] = {
     val records = loadCSVDataFile(path)
     val index = Map.empty[String, List[Airline]].withDefaultValue(List())
 
@@ -86,7 +86,7 @@ object OpenFlights {
     }
   }
 
-  def loadAirlines(path: String): List[Airline] = {
+  private def loadAirlines(path: String): List[Airline] = {
     val records = loadCSVDataFile(path)
     records.foldLeft(List[Airline]()) { (list, n) =>
       list ++ List(Airline(
@@ -98,7 +98,7 @@ object OpenFlights {
     }
   }
 
-  def loadAirportsAsMap(path: String): Map[String, List[Airport]] = {
+  private def loadAirportsAsMap(path: String): Map[String, List[Airport]] = {
     val records = loadCSVDataFile(path)
     val index = Map.empty[String, List[Airport]].withDefaultValue(List())
 
@@ -131,7 +131,7 @@ object OpenFlights {
     }
   }
 
-  def loadAirports(path: String): List[Airport] = {
+  private def loadAirports(path: String): List[Airport] = {
     val records = loadCSVDataFile(path)
     records.foldLeft(List[Airport]()) { (list, n) =>
       if (n.length>12)
@@ -158,7 +158,7 @@ object OpenFlights {
     }
   }
 
-  def loadRoutesAsMap(path: String): Map[RouteKey, List[Route]] = {
+  private def loadRoutesAsMap(path: String): Map[RouteKey, List[Route]] = {
     val records = loadCSVDataFile(path)
     val index = Map.empty[RouteKey, List[Route]].withDefaultValue(List())
 
@@ -180,7 +180,7 @@ object OpenFlights {
     }
   }
 
-  def loadRoutes(path: String): List[Route] = {
+  private def loadRoutes(path: String): List[Route] = {
     val records = loadCSVDataFile(path)
     records.foldLeft(List[Route]()) { (list, n) => 
       list ++ List(Route(
