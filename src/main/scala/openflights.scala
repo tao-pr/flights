@@ -6,15 +6,15 @@ import starcolon.flights.geo.Geo
 import scala.collection.mutable.Map
 
 case class Airline (id: Long, code: String, name: String, country: String){
-  def prettyPrint(){
+  def prettyPrint(): Unit = {
     println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
   }
 }
 
 case class Airport (code: String, name: String, city: String, country: String, lat: Float, lng: Float){
-  def prettyPrint(){
     println("🏠 " + Console.CYAN + name + " (" + code + ") " + 
       Console.WHITE + city + "/" + country + Console.RESET)
+  def prettyPrint(): Unit = {
   }
 
   def isValidAirport() = code.length>0
