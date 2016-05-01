@@ -182,10 +182,10 @@ object OpenFlights {
       .withDefaultValue(initialMap)
 
     records.foldLeft(index) { (index, n) =>
-      var src      = n(2).replace("\"", "")
-      var dst      = n(4).replace("\"", "")
+      var src   = n(2).replace("\"", "")
+      var dst   = n(4).replace("\"", "")
 
-      var route    = Route(
+      var route = Route(
         n(0).replace("\"", ""),
         src,
         dst,
@@ -193,7 +193,12 @@ object OpenFlights {
       )
 
       // Ensure mapping: source -> dest -> [Route]
-      index(src)(dst) = route +: index(src)(dst)
+      if (!index.contains(src))
+        index(src) = Map()
+      if (!index(src).contains(dst))
+        index(src)(dst) = List(route)
+      else
+        index(src)(dst) = route +: index(src)(dst)
       index
     }
   }
