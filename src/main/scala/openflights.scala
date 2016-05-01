@@ -53,6 +53,13 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
  * OpenFlights data source handler
  */
 object OpenFlights {
+
+  /**
+   * Mapping of source city -> Destination city -> [[Route]]s
+   */
+  type DestinationMap = Map[String,List[Route]] 
+  type RouteMap = Map[String,DestinationMap]
+
   /**
    * A mapping of two-letter airline codes to the airlines that have used that
    * code. It is possible for the codes of defunct airlines to be reassigned.
@@ -67,7 +74,7 @@ object OpenFlights {
   /**
    * A mapping of [[Route]]s keyed by their (source, destination) pairs.
    */
-  val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
+  val routes: RouteMap = loadRoutesAsMap("/data/openflights/routes.dat")
 
   private def loadCSVDataFile(path: String): List[Array[String]] = {
     val stream: InputStream = getClass.getResourceAsStream(path)
@@ -167,16 +174,17 @@ object OpenFlights {
     }
   }
 
-  private def loadRoutesAsMap(path: String): Map[RouteKey, List[Route]] = {
+  private def loadRoutesAsMap(path: String): RouteMap = {
     val records = loadCSVDataFile(path)
-    val index = Map.empty[RouteKey, List[Route]].withDefaultValue(List())
+    val initialMap = Map.empty[String,List[Route]]
+      .withDefaultValue(List())
+    val index = Map.empty[String, DestinationMap]
+      .withDefaultValue(initialMap)
 
     records.foldLeft(index) { (index, n) =>
       var src      = n(2).replace("\"", "")
       var dst      = n(4).replace("\"", "")
 
-      // Both src and dst airport codes as a key
-      var routeKey = RouteKey(src, dst)
       var route    = Route(
         n(0).replace("\"", ""),
         src,
@@ -184,7 +192,8 @@ object OpenFlights {
         n(7).toInt
       )
 
-      index(routeKey) = route +: index(routeKey)
+      // Ensure mapping: source -> dest -> [Route]
+      index(src)(dst) = route +: index(src)(dst)
       index
     }
   }

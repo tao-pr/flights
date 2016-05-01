@@ -54,9 +54,10 @@ object RouteMap{
    * Find all direct routes between two airports
    */
   def findAirportRoutes(airportSrc: String, airportDest: String): List[Route] = {
-    val key = RouteKey(airportSrc,airportDest)
-    if (OpenFlights.routes.contains(key))
-      return OpenFlights.routes(key)
+
+    if (OpenFlights.routes.contains(airportSrc) &&
+        OpenFlights.routes(airportSrc).contains(airportDest))
+          return OpenFlights.routes(airportSrc)(airportDest)
     else
       return List[Route]()
   }
