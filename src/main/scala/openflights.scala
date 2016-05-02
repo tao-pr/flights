@@ -47,6 +47,14 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
   // Distance in metres between the source airport
   // and the destination airport
   def distance() = Geo.distance(srcLat, srcLng, dstLat, dstLng)
+
+  def prettyPrint(){
+    println(Console.CYAN + route.airlineCode + " ✈️ " + 
+      Console.GREEN + route.airportSourceCode + " ➡️ " + route.airportDestCode + " " + 
+      Console.WHITE + route.numStops.toString + " stops " + 
+      Console.YELLOW + distance()/1000 + " km" +
+      Console.RESET)
+  }
 }
 
 /**

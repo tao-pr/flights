@@ -20,12 +20,12 @@ object RouteMap{
   /**
    * Find all routes between two cities
    */
-  def findCityRoutes(citySrc: String, cityDest: String): List[Route] = {
+  def findCityRoutes(citySrc: String, cityDest: String): List[GeoRoute] = {
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
-    srcAirports.foldLeft(List[Route]()) { (route,src) =>
-      route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
+    srcAirports.foldLeft(List[GeoRoute]()) { (route,src) =>
+      route ++ dstAirports.foldLeft(List[GeoRoute]()) { (_route,dst) => 
         val r = findAirportRoutes(src, dst)
         _route ++ r
       }
@@ -35,42 +35,47 @@ object RouteMap{
   /**
    * Find indirect routes which connect two cities
    */
-  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[Route] = {
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[GeoRoute] = {
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
     // Examine each pair of the src-dst airports
-    srcAirports.foldLeft(List[Route]()) { (route,src) =>
-      route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) =>
+    srcAirports.foldLeft(List[GeoRoute]()) { (route,src) =>
+      route ++ dstAirports.foldLeft(List[GeoRoute]()) { (_route,dst) =>
         val r = findIndirectAirportRoutes(src, dst, maxDegree)
         _route ++ r
       }
     }
   
-    return List[Route]()
+    return List[GeoRoute]()
   } 
 
   /**
    * Find all direct routes between two airports
    */
-  def findAirportRoutes(airportSrc: Airport, airportDest: Airport): List[Route] = {
+  def findAirportRoutes(airportSrc: Airport, airportDest: Airport): List[GeoRoute] = {
 
     if (OpenFlights.routes.contains(airportSrc.code) &&
         OpenFlights.routes(airportSrc.code).contains(airportDest.code))
           return OpenFlights.routes(airportSrc.code)(airportDest.code)
+            .map(r => GeoRoute(
+              r,
+              airportSrc.lat, airportSrc.lng,
+              airportDest.lat, airportDest.lng
+              ))
     else
-      return List[Route]()
+      return List[GeoRoute]()
   }
 
   /**
    * Find all indirect routes between two airports
    * There is at least one connecting airport between the two.
    */
-  def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[Route] = {
+  def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[GeoRoute] = {
 
     // Perform a depth-first-search
     // TAOTODO:
-    return List[Route]()
+    return List[GeoRoute]()
   }
 
 }
