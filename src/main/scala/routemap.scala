@@ -10,12 +10,7 @@ object RouteMap{
   /**
    * Find all airports located in a particular city
    */
-  def findAirports(city: String): List[Airport] = {
-    if (OpenFlights.airports.contains(city))
-      return OpenFlights.airports(city)
-    else
-      return List[Airport]()
-  }
+  def findAirports(city: String): List[Airport] = OpenFlights.airports(city)
 
   /**
    * Find all routes between two cities
@@ -62,13 +57,8 @@ object RouteMap{
   /**
    * Find all direct routes between two airports
    */
-  def findAirportRoutes(airportSrc: String, airportDest: String): List[Route] = {
-    val key = RouteKey(airportSrc,airportDest)
-    if (OpenFlights.routes.contains(key))
-      return OpenFlights.routes(key)
-    else
-      return List[Route]()
-  }
+  def findAirportRoutes(airportSrc: String, airportDest: String): List[Route] =
+    OpenFlights.routes(RouteKey(airportSrc, airportDest))
 
   /**
    * Find all indirect routes between two airports
@@ -79,5 +69,4 @@ object RouteMap{
     // TAOTODO:
     return List[Route]()
   }
-
 }
