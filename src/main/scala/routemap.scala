@@ -26,7 +26,7 @@ object RouteMap{
 
     srcAirports.foldLeft(List[Route]()) { (route,src) =>
       route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
-        val r = findAirportRoutes(src.code, dst.code)
+        val r = findAirportRoutes(src, dst)
         _route ++ r
       }
     }
@@ -42,7 +42,7 @@ object RouteMap{
     // Examine each pair of the src-dst airports
     srcAirports.foldLeft(List[Route]()) { (route,src) =>
       route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) =>
-        val r = findIndirectAirportRoutes(src.code, dst.code, maxDegree)
+        val r = findIndirectAirportRoutes(src, dst, maxDegree)
         _route ++ r
       }
     }
@@ -53,11 +53,11 @@ object RouteMap{
   /**
    * Find all direct routes between two airports
    */
-  def findAirportRoutes(airportSrc: String, airportDest: String): List[Route] = {
+  def findAirportRoutes(airportSrc: Airport, airportDest: Airport): List[Route] = {
 
-    if (OpenFlights.routes.contains(airportSrc) &&
-        OpenFlights.routes(airportSrc).contains(airportDest))
-          return OpenFlights.routes(airportSrc)(airportDest)
+    if (OpenFlights.routes.contains(airportSrc.code) &&
+        OpenFlights.routes(airportSrc.code).contains(airportDest.code))
+          return OpenFlights.routes(airportSrc.code)(airportDest.code)
     else
       return List[Route]()
   }
@@ -66,8 +66,9 @@ object RouteMap{
    * Find all indirect routes between two airports
    * There is at least one connecting airport between the two.
    */
-  def findIndirectAirportRoutes(airportSrc: String, airportDest: String, maxDegree: Int): List[Route] = {
+  def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[Route] = {
 
+    // Perform a depth-first-search
     // TAOTODO:
     return List[Route]()
   }
