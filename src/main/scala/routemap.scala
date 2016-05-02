@@ -11,8 +11,8 @@ object RouteMap{
    * Find all airports located in a particular city
    */
   def findAirports(city: String): List[Airport] = {
-    if (OpenFlights.airports.contains(city))
-      return OpenFlights.airports(city)
+    if (OpenFlights.cityAirports.contains(city))
+      return OpenFlights.cityAirports(city)
     else
       return List[Airport]()
   }
@@ -73,9 +73,61 @@ object RouteMap{
    */
   def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[GeoRoute] = {
 
-    // Perform a depth-first-search
-    // TAOTODO:
-    return List[GeoRoute]()
+    // Perform a **greedy** depth-first-search
+    return findConnectingRoutes(
+      airportSrc,
+      airportDest,
+      maxDegree,
+      List()
+    )
+  }
+
+  /**
+   * Calculate a total distance in metre of the routes
+   */
+  private def totalRouteDistance(routes: List[GeoRoute]): Float = {
+    routes.map(_.distance).sum
+  }
+
+  private def findConnectingRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int, prevRoute: List[GeoRoute]): List[GeoRoute] = {
+    // Stopping criterion
+    if (maxDegree<=0)
+      return List()
+
+    // Expand all routes which start at the source airport
+    val allRouteMap = OpenFlights.routes(airportSrc.code)
+    for ((nextDest, routes) <- allRouteMap){
+
+      val nextDestAirport = OpenFlights.airports(nextDest)
+
+      // These geolocations are useful for future implementation
+      val (lat0, lng0) = (airportSrc.lat, airportSrc.lng)
+      val (lat1, lng1) = (nextDestAirport.lat, nextDestAirport.lng)
+
+      // Extend the previous routes with the expanded route list
+
+      // ENHANCEMENT: List is not good at appending
+      // Needs to find a better list-like structure
+      val nextRoutes = routes.map(r => 
+        prevRoute ++ List(GeoRoute(r,lat0,lng0,lat1,lng1))
+      )
+
+      // Finally reaches the final destination?
+      if (nextDest == airportDest.code){
+        return nextRoutes
+      }
+      else{
+        // Find further routes starting from
+        // the current landing airport (nextDest)
+        val nextRoutes_ = nextRoutes.map(findConnectingRoutes(
+          nextDestAirport, 
+          airportDest,
+          maxDegree-1,
+          _
+        ))
+        return nextRoutes_ ++ prevRoute    
+      }
+    }
   }
 
 }

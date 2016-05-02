@@ -63,6 +63,16 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
 object OpenFlights {
 
   /**
+   * Mapping of an airport code -> Airport
+   */
+  type AirportMap = Map[String,Airport]
+
+  /**
+   * Mapping of a city -> [[Airport]]s
+   */
+  type AirportCityMap = Map[String,List[Airport]]
+
+  /**
    * Mapping of source city -> Destination city -> [[Route]]s
    */
   type DestinationMap = Map[String,List[Route]] 
@@ -77,7 +87,7 @@ object OpenFlights {
   /**
    * A mapping of city names to the [[Airport]]s located in that city.
    */
-  val airports: Map[String, List[Airport]] = loadAirportsAsMap("/data/openflights/airports.dat")
+  val (airports: AirportMap, cityAirports:AirportCityMap) = loadAirportsAsMap("/data/openflights/airports.dat")
 
   /**
    * A mapping of [[Route]]s keyed by their (source, destination) pairs.
@@ -122,11 +132,21 @@ object OpenFlights {
     }
   }
 
-  private def loadAirportsAsMap(path: String): Map[String, List[Airport]] = {
+  /**
+   * Load airport mappings from the data file.
+   * This function potentially produces a tuple of two mappings:
+   * - Mapping from airport code -> airport 
+   * - Mapping from city -> [airport] list
+   */
+  private def loadAirportsAsMap(path: String): 
+  (AirportMap, AirportCityMap) = {
     val records = loadCSVDataFile(path)
-    val index = Map.empty[String, List[Airport]].withDefaultValue(List())
+    val airportMap  = Map.empty[String, Airport]
+    val airportCity = Map.empty[String, List[Airport]].withDefaultValue(List())
 
-    records.foldLeft(index) { (index, n) =>
+    records.foldLeft((airportMap,airportCity)) { (mappings, n) =>
+      val (airportMap,airportCity) = mappings
+      
       val name = n(1).replace("\"", "")
 
       // In case the city has a comma, it will be unintentionally split so we
@@ -149,9 +169,12 @@ object OpenFlights {
         Airport(code, name, city, country, lat, lng)
       }
 
+      // Update both maps
       val city = airport.city
-      index(city) = airport +: index(city)
-      index
+      airportCity(city)        = airport +: airportCity(city)
+      airportMap(airport.code) = airport
+
+      (airportMap,airportCity)
     }
   }
 
