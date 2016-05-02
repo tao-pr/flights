@@ -26,5 +26,5 @@ object Core extends App {
   // Find indirect flights between two cities
   val routesIndirect = RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree)
   println(Console.MAGENTA + "[Indirect flights]" + Console.RESET)
-  routesIndirect foreach { _.prettyPrint() }
+  // routesIndirect foreach { _.prettyPrint() }
 }

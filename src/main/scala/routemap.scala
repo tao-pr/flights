@@ -35,19 +35,19 @@ object RouteMap{
   /**
    * Find indirect routes which connect two cities
    */
-  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[GeoRoute] = {
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[List[GeoRoute]] = {
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
     // Examine each pair of the src-dst airports
-    srcAirports.foldLeft(List[GeoRoute]()) { (route,src) =>
-      route ++ dstAirports.foldLeft(List[GeoRoute]()) { (_route,dst) =>
-        val r = findIndirectAirportRoutes(src, dst, maxDegree)
-        _route ++ r
+    srcAirports.foldLeft(List[List[GeoRoute]]()) { (route,src) =>
+      route ++ dstAirports.foldLeft(List[List[GeoRoute]]()) { (_route,dst) =>
+        val rs = findIndirectAirportRoutes(src, dst, maxDegree)
+        _route ++ rs
       }
     }
   
-    return List[GeoRoute]()
+    return List()
   } 
 
   /**
@@ -71,7 +71,7 @@ object RouteMap{
    * Find all indirect routes between two airports
    * There is at least one connecting airport between the two.
    */
-  def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[GeoRoute] = {
+  def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[List[GeoRoute]] = {
 
     // Perform a **greedy** depth-first-search
     return findConnectingRoutes(
@@ -89,15 +89,22 @@ object RouteMap{
     routes.map(_.distance).sum
   }
 
-  private def findConnectingRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int, prevRoute: List[GeoRoute]): List[GeoRoute] = {
+  /**
+   * Find routes which connect two airports.
+   * The function may return multiple possible routes which it finds.
+   */
+  private def findConnectingRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int, prevRoute: List[GeoRoute]): List[List[GeoRoute]] = {
     // Stopping criterion
     if (maxDegree<=0)
       return List()
 
     // Expand all routes which start at the source airport
-    val allRouteMap = OpenFlights.routes(airportSrc.code)
-    for ((nextDest, routes) <- allRouteMap){
+    // (Depth-first)
+    val routesFromSrc = OpenFlights.routes(airportSrc.code)
+    
+    routesFromSrc.foldLeft(List()) { (allRoutes,n) =>
 
+      val (nextDest, routes) = n
       val nextDestAirport = OpenFlights.airports(nextDest)
 
       // These geolocations are useful for future implementation
@@ -114,18 +121,17 @@ object RouteMap{
 
       // Finally reaches the final destination?
       if (nextDest == airportDest.code){
-        return nextRoutes
+        return nextRoutes ++ allRoutes
       }
       else{
         // Find further routes starting from
         // the current landing airport (nextDest)
-        val nextRoutes_ = nextRoutes.map(findConnectingRoutes(
+        return nextRoutes.flatMap(rs => findConnectingRoutes(
           nextDestAirport, 
           airportDest,
           maxDegree-1,
-          _
-        ))
-        return nextRoutes_ ++ prevRoute    
+          rs
+        )) ++ allRoutes
       }
     }
   }
