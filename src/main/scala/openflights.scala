@@ -23,7 +23,7 @@ case class Airport (code: String, name: String, city: String, country: String, l
 }
 
 case class Route (airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int){
-  def prettyPrint(){
+  def prettyPrint(): Unit = {
     println(Console.CYAN + airlineCode + " ✈️ " + 
       Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " + 
       Console.WHITE + numStops.toString + " stops" + Console.RESET)
