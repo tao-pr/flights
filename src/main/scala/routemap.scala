@@ -96,6 +96,10 @@ object RouteMap{
     if (maxDegree<=0)
       return List()
 
+    // TAOTODO: Other stopping criteria:
+    // - Too large total distance
+    // - Too large one single distance of a flight
+
     println(Console.CYAN + "==================================" + Console.RESET)
     println(Console.CYAN + s"[Max ${maxDegree} degrees left]..." + Console.RESET)
     println(Console.GREEN + "Expanding route from: " + prevRoute.map(_.route.airportSourceCode).mkString(" ➡️ ") + 
