@@ -1,7 +1,5 @@
 package starcolon.flights.openflights
 
-import java.io.InputStream
-
 import starcolon.flights.geo.Geo
 import scala.collection.mutable.Map
 
