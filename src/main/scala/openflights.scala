@@ -58,17 +58,22 @@ object OpenFlights {
    * A mapping of two-letter airline codes to the airlines that have used that
    * code. It is possible for the codes of defunct airlines to be reassigned.
    */
-  lazy val airlines: Map[String, List[Airline]] = loadAirlinesAsMap("/data/openflights/airlines.dat")
+  lazy val airlines: Map[String, List[Airline]] =
+    asMultiMap(loadAirlines("/data/openflights/airlines.dat"), airline => airline.code)
 
   /**
    * A mapping of city names to the [[Airport]]s located in that city.
    */
-  lazy val airports: Map[String, List[Airport]] = loadAirportsAsMap("/data/openflights/airports.dat")
+  lazy val airports: Map[String, List[Airport]] =
+    asMultiMap(loadAirports("/data/openflights/airports.dat"), airport => airport.city)
 
   /**
    * A mapping of [[Route]]s keyed by their (source, destination) pairs.
    */
-  lazy val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
+  lazy val routes: Map[RouteKey, List[Route]] = {
+    val records = loadRoutes("/data/openflights/routes.dat")
+    asMultiMap(records, route => RouteKey(route.airportSourceCode, route.airportDestCode))
+  }
 
   // Decoders that tell kantan.csv how to construct our case classes from the raw data
   private implicit val airportDecoder: RowDecoder[Airport] = RowDecoder.decoder6(Airport.apply)(4, 1, 2, 3, 6, 7)
@@ -91,46 +96,27 @@ object OpenFlights {
     url.unsafeReadCsv[List, T](',', false) // comma separator, no header
   }
 
-  private def loadAirlinesAsMap(path: String): Map[String, List[Airline]] = {
-    val records = loadAirlines(path)
-    val index = Map.empty[String, List[Airline]].withDefaultValue(List())
-
-    records.foldLeft(index) { (index, airline) =>
-      val code = airline.code
-      index(code) = airline +: index(code)
-      index
-    }
-  }
-
   /** Load a list of [[Airline]]s, given a path to a CSV file. */
   private def loadAirlines(path: String): List[Airline] = loadCSVDataFile[Airline](path)
-
-  private def loadAirportsAsMap(path: String): Map[String, List[Airport]] = {
-    val records = loadAirports(path)
-    val index = Map.empty[String, List[Airport]].withDefaultValue(List())
-
-    records.foldLeft(index) { (index, airport) =>
-      val city = airport.city
-      index(city) = airport +: index(city)
-      index
-    }
-  }
 
   /** Load a list of [[Airport]]s, given a path to a CSV file. */
   private def loadAirports(path: String): List[Airport] = loadCSVDataFile[Airport](path)
 
-  private def loadRoutesAsMap(path: String): Map[RouteKey, List[Route]] = {
-    val records = loadRoutes(path)
-    val index = Map.empty[RouteKey, List[Route]].withDefaultValue(List())
+  /** Load a list of [[Routes]]s, given a path to a CSV file. */
+  private def loadRoutes(path: String): List[Route] = loadCSVDataFile[Route](path)
 
-    records.foldLeft(index) { (index, route) =>
-      // Both src and dst airport codes as a key
-      var routeKey = RouteKey(route.airportSourceCode, route.airportDestCode)
-      index(routeKey) = route +: index(routeKey)
+  /**
+   * Creates a multi-Map from a list, using the given keyfunc to derive a map
+   * key for each list value. The Map is defined to return an empty List for
+   * keys with missing values.
+   */
+  private def asMultiMap[K, V](records: List[V], keyfunc: V => K): Map[K, List[V]] = {
+    val index = Map.empty[K, List[V]].withDefaultValue(List())
+
+    records.foldLeft(index) { (index, record) =>
+      val key = keyfunc(record)
+      index(key) = record +: index(key)
       index
     }
   }
-
-  /** Load a list of [[Routes]]s, given a path to a CSV file. */
-  private def loadRoutes(path: String): List[Route] = loadCSVDataFile[Route](path)
 }
