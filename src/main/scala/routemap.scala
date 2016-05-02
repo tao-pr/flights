@@ -46,8 +46,6 @@ object RouteMap{
         _route ++ rs
       }
     }
-  
-    return List()
   } 
 
   /**
@@ -98,41 +96,62 @@ object RouteMap{
     if (maxDegree<=0)
       return List()
 
+    println(Console.CYAN + "==================================" + Console.RESET)
+    println(Console.CYAN + s"[Max ${maxDegree} degrees left]..." + Console.RESET)
+    println(Console.GREEN + "Expanding route from: " + prevRoute.map(_.route.airportSourceCode).mkString(" ➡️ ") + 
+      " " + airportSrc.code + Console.RESET )
+    println(Console.CYAN + "==================================" + Console.RESET)
+
     // Expand all routes which start at the source airport
     // (Depth-first)
     val routesFromSrc = OpenFlights.routes(airportSrc.code)
-    
-    routesFromSrc.foldLeft(List()) { (allRoutes,n) =>
+
+    routesFromSrc.foldLeft(List[List[GeoRoute]]()) { (allRoutes,n) =>
 
       val (nextDest, routes) = n
-      val nextDestAirport = OpenFlights.airports(nextDest)
+      var allRoutes_ = List[List[GeoRoute]]()
 
-      // These geolocations are useful for future implementation
-      val (lat0, lng0) = (airportSrc.lat, airportSrc.lng)
-      val (lat1, lng1) = (nextDestAirport.lat, nextDestAirport.lng)
+      // Skip backward routes or invalid routes
+      if (OpenFlights.airports.contains(nextDest) && nextDest != airportSrc.code){
+        val nextDestAirport = OpenFlights.airports(nextDest)
 
-      // Extend the previous routes with the expanded route list
+        println(airportSrc.code + " to " + nextDest + s" ${routes.length} routes")
 
-      // ENHANCEMENT: List is not good at appending
-      // Needs to find a better list-like structure
-      val nextRoutes = routes.map(r => 
-        prevRoute ++ List(GeoRoute(r,lat0,lng0,lat1,lng1))
-      )
+        // These geolocations are useful for future implementation
+        val (lat0, lng0) = (airportSrc.lat, airportSrc.lng)
+        val (lat1, lng1) = (nextDestAirport.lat, nextDestAirport.lng)
 
-      // Finally reaches the final destination?
-      if (nextDest == airportDest.code){
-        return nextRoutes ++ allRoutes
+        // Extend the previous routes with the expanded route list
+
+        // ENHANCEMENT: List is not good at appending
+        // Needs to find a better list-like structure
+        val nextRoutes = routes.map(r => 
+          prevRoute ++ List(GeoRoute(r,lat0,lng0,lat1,lng1))
+        )
+
+        // Finally reaches the final destination?        
+        if (nextDest == airportDest.code){
+          println(Console.YELLOW + "Terminal found!" + Console.RESET)
+          allRoutes_ = nextRoutes ++ allRoutes
+        }
+        else{
+          // Find further routes starting from
+          // the current landing airport (nextDest)
+          val nextRoutes_ = nextRoutes.flatMap(rs => findConnectingRoutes(
+            nextDestAirport, 
+            airportDest,
+            maxDegree-1,
+            rs
+          ))
+
+          // Expanded routes could not be empty
+          // otherwise, they never end at our final destination airport.
+          if (nextRoutes.length>0)
+            allRoutes_ = nextRoutes_ ++ allRoutes
+        }
       }
-      else{
-        // Find further routes starting from
-        // the current landing airport (nextDest)
-        return nextRoutes.flatMap(rs => findConnectingRoutes(
-          nextDestAirport, 
-          airportDest,
-          maxDegree-1,
-          rs
-        )) ++ allRoutes
-      }
+
+      allRoutes_
     }
   }
 
