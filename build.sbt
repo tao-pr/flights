@@ -8,3 +8,15 @@ version := "0.0.1-SNAPSHOT"
 scalaVersion   := "2.11.7"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xlint")
 
+/**
+ * Automated source formatting upon compile, for consistency and focused code
+ * reviews.
+ */
+import com.typesafe.sbt.SbtScalariform
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import scalariform.formatter.preferences._
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(PreserveDanglingCloseParenthesis, true)
