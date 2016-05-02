@@ -59,19 +59,19 @@ object OpenFlights {
    * code. It is possible for the codes of defunct airlines to be reassigned.
    */
   lazy val airlines: Map[String, List[Airline]] =
-    asMultiMap(loadAirlines("/data/openflights/airlines.dat"), airline => airline.code)
+    asMultiMap(loadCSV[Airline]("/data/openflights/airlines.dat"), airline => airline.code)
 
   /**
    * A mapping of city names to the [[Airport]]s located in that city.
    */
   lazy val airports: Map[String, List[Airport]] =
-    asMultiMap(loadAirports("/data/openflights/airports.dat"), airport => airport.city)
+    asMultiMap(loadCSV[Airport]("/data/openflights/airports.dat"), airport => airport.city)
 
   /**
    * A mapping of [[Route]]s keyed by their (source, destination) pairs.
    */
   lazy val routes: Map[RouteKey, List[Route]] = {
-    val records = loadRoutes("/data/openflights/routes.dat")
+    val records = loadCSV[Route]("/data/openflights/routes.dat")
     asMultiMap(records, route => RouteKey(route.airportSourceCode, route.airportDestCode))
   }
 
@@ -90,20 +90,11 @@ object OpenFlights {
    * @tparam T The class represented by records in the CSV. Requires a
    *   [[kantan.csv.RowDecoder]] instance for the type available in scope.
    */
-  private def loadCSVDataFile[T: RowDecoder](path: String): List[T] = {
+  private def loadCSV[T: RowDecoder](path: String): List[T] = {
     val url = getClass.getResource(path)
     // We have a static, well-formed data set -- unsafe causes no errors.
     url.unsafeReadCsv[List, T](',', false) // comma separator, no header
   }
-
-  /** Load a list of [[Airline]]s, given a path to a CSV file. */
-  private def loadAirlines(path: String): List[Airline] = loadCSVDataFile[Airline](path)
-
-  /** Load a list of [[Airport]]s, given a path to a CSV file. */
-  private def loadAirports(path: String): List[Airport] = loadCSVDataFile[Airport](path)
-
-  /** Load a list of [[Routes]]s, given a path to a CSV file. */
-  private def loadRoutes(path: String): List[Route] = loadCSVDataFile[Route](path)
 
   /**
    * Creates a multi-Map from a list, using the given keyfunc to derive a map
