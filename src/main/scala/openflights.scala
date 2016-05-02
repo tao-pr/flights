@@ -57,17 +57,17 @@ object OpenFlights {
    * A mapping of two-letter airline codes to the airlines that have used that
    * code. It is possible for the codes of defunct airlines to be reassigned.
    */
-  val airlines: Map[String, List[Airline]] = loadAirlinesAsMap("/data/openflights/airlines.dat")
+  lazy val airlines: Map[String, List[Airline]] = loadAirlinesAsMap("/data/openflights/airlines.dat")
 
   /**
    * A mapping of city names to the [[Airport]]s located in that city.
    */
-  val airports: Map[String, List[Airport]] = loadAirportsAsMap("/data/openflights/airports.dat")
+  lazy val airports: Map[String, List[Airport]] = loadAirportsAsMap("/data/openflights/airports.dat")
 
   /**
    * A mapping of [[Route]]s keyed by their (source, destination) pairs.
    */
-  val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
+  lazy val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
 
   private def loadCSVDataFile(path: String): List[Array[String]] = {
     val stream: InputStream = getClass.getResourceAsStream(path)
