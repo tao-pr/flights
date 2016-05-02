@@ -6,7 +6,7 @@ import starcolon.flights.geo._
 /**
  * Route mapper/finder utility
  */
-object RouteMap{
+object RouteMap {
   /**
    * Find all airports located in a particular city
    */
@@ -19,10 +19,10 @@ object RouteMap{
     val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
-    srcAirports.foldLeft(List[Route]()) { (route,src) =>
-      route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) => 
+    srcAirports.foldLeft(List[Route]()) { (route, src) =>
+      route ++ dstAirports.foldLeft(List[Route]()) { (_route, dst) =>
         val r = findAirportRoutes(src.code, dst.code)
-        
+
         // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
         // println(r.length + " routes")
         // r foreach {n => n.prettyPrint}
@@ -39,8 +39,8 @@ object RouteMap{
     val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
 
     // Examine each pair of the src-dst airports
-    srcAirports.foldLeft(List[Route]()) { (route,src) =>
-      route ++ dstAirports.foldLeft(List[Route]()) { (_route,dst) =>
+    srcAirports.foldLeft(List[Route]()) { (route, src) =>
+      route ++ dstAirports.foldLeft(List[Route]()) { (_route, dst) =>
         val r = findIndirectAirportRoutes(src.code, dst.code, maxDegree)
 
         // println(Console.YELLOW + src.code + Console.WHITE + " to " + Console.YELLOW + dst.code + Console.RESET)
@@ -50,9 +50,9 @@ object RouteMap{
         _route ++ r
       }
     }
-  
+
     return List[Route]()
-  } 
+  }
 
   /**
    * Find all direct routes between two airports
