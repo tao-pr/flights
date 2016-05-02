@@ -51,6 +51,9 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
  * OpenFlights data source handler
  */
 object OpenFlights {
+  import kantan.csv._
+  import kantan.csv.ops.CsvInputOps
+
   /**
    * A mapping of two-letter airline codes to the airlines that have used that
    * code. It is possible for the codes of defunct airlines to be reassigned.
@@ -67,135 +70,67 @@ object OpenFlights {
    */
   lazy val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
 
-  private def loadCSVDataFile(path: String): List[Array[String]] = {
-    val source = io.Source.fromURL(getClass.getResource(path))
-    val records = source.getLines.map { line => line.split(",").map(_.trim) }.toList
-    source.close()
-    records
+  // Decoders that tell kantan.csv how to construct our case classes from the raw data
+  private implicit val airportDecoder: RowDecoder[Airport] = RowDecoder.decoder6(Airport.apply)(4, 1, 2, 3, 6, 7)
+  private implicit val airlineDecoder: RowDecoder[Airline] = RowDecoder.decoder4(Airline.apply)(0, 4, 1, 6)
+  private implicit val routeDecoder: RowDecoder[Route] = RowDecoder.decoder4(Route.apply)(0, 2, 4, 7)
+
+  /**
+   * Load data from a CSV file, converting records to a [[List]] of the
+   * parameterized type.
+   *
+   * Note: loads the entire file into memory eagerly; careful with huge files.
+   *
+   * @param path The path of the CSV file, as a resource on the classpath.
+   * @tparam T The class represented by records in the CSV. Requires a
+   *   [[kantan.csv.RowDecoder]] instance for the type available in scope.
+   */
+  private def loadCSVDataFile[T: RowDecoder](path: String): List[T] = {
+    val url = getClass.getResource(path)
+    // We have a static, well-formed data set -- unsafe causes no errors.
+    url.unsafeReadCsv[List, T](',', false) // comma separator, no header
   }
 
   private def loadAirlinesAsMap(path: String): Map[String, List[Airline]] = {
-    val records = loadCSVDataFile(path)
+    val records = loadAirlines(path)
     val index = Map.empty[String, List[Airline]].withDefaultValue(List())
 
-    records.foldLeft(index) { (index, n) =>
-      // Airline code as a key
-      val code = n(4).replace("\"", "")
-      var airline = Airline(
-        n(0).toLong,
-        n(4).replace("\"", ""),
-        n(1).replace("\"", ""),
-        n(6).replace("\"", "")
-      )
-
+    records.foldLeft(index) { (index, airline) =>
+      val code = airline.code
       index(code) = airline +: index(code)
       index
     }
   }
 
-  private def loadAirlines(path: String): List[Airline] = {
-    val records = loadCSVDataFile(path)
-    records.foldLeft(List[Airline]()) { (list, n) =>
-      list ++ List(Airline(
-        n(0).toLong,
-        n(4).replace("\"", ""),
-        n(1).replace("\"", ""),
-        n(6).replace("\"", "")
-      ))
-    }
-  }
+  /** Load a list of [[Airline]]s, given a path to a CSV file. */
+  private def loadAirlines(path: String): List[Airline] = loadCSVDataFile[Airline](path)
 
   private def loadAirportsAsMap(path: String): Map[String, List[Airport]] = {
-    val records = loadCSVDataFile(path)
+    val records = loadAirports(path)
     val index = Map.empty[String, List[Airport]].withDefaultValue(List())
 
-    records.foldLeft(index) { (index, n) =>
-      val name = n(1).replace("\"", "")
-
-      // In case the city has a comma, it will be unintentionally split so we
-      // have one extra element in the split array.
-      val airport = if (n.length > 12) {
-        val city = s"${n(2)}, ${n(3)}".replace("\"", "")
-        val country = n(4).replace("\"", "")
-        val code = n(5).replace("\"", "")
-        val lat = n(7).toFloat
-        val lng = n(8).toFloat
-
-        Airport(code, name, city, country, lat, lng)
-      } else {
-        val city = n(2).replace("\"", "")
-        val country = n(3).replace("\"", "")
-        val code = n(4).replace("\"", "")
-        val lat = n(6).toFloat
-        val lng = n(7).toFloat
-
-        Airport(code, name, city, country, lat, lng)
-      }
-
+    records.foldLeft(index) { (index, airport) =>
       val city = airport.city
       index(city) = airport +: index(city)
       index
     }
   }
 
-  private def loadAirports(path: String): List[Airport] = {
-    val records = loadCSVDataFile(path)
-    records.foldLeft(List[Airport]()) { (list, n) =>
-      if (n.length > 12)
-        // In case the city has a comma,
-        // it will be unintentionally splitted so we have
-        // one extra element in the splitted array.
-        list ++ List(Airport(
-          n(4).replace("\"", ""),
-          n(1).replace("\"", ""),
-          (n(2) + ", " + n(3)).replace("\"", ""),
-          n(4).replace("\"", ""),
-          n(7).toFloat,
-          n(8).toFloat
-        ))
-      else
-        list ++ List(Airport(
-          n(4).replace("\"", ""),
-          n(1).replace("\"", ""),
-          n(2).replace("\"", ""),
-          n(3).replace("\"", ""),
-          n(6).toFloat,
-          n(7).toFloat
-        ))
-    }
-  }
+  /** Load a list of [[Airport]]s, given a path to a CSV file. */
+  private def loadAirports(path: String): List[Airport] = loadCSVDataFile[Airport](path)
 
   private def loadRoutesAsMap(path: String): Map[RouteKey, List[Route]] = {
-    val records = loadCSVDataFile(path)
+    val records = loadRoutes(path)
     val index = Map.empty[RouteKey, List[Route]].withDefaultValue(List())
 
-    records.foldLeft(index) { (index, n) =>
-      var src = n(2).replace("\"", "")
-      var dst = n(4).replace("\"", "")
-
+    records.foldLeft(index) { (index, route) =>
       // Both src and dst airport codes as a key
-      var routeKey = RouteKey(src, dst)
-      var route = Route(
-        n(0).replace("\"", ""),
-        src,
-        dst,
-        n(7).toInt
-      )
-
+      var routeKey = RouteKey(route.airportSourceCode, route.airportDestCode)
       index(routeKey) = route +: index(routeKey)
       index
     }
   }
 
-  private def loadRoutes(path: String): List[Route] = {
-    val records = loadCSVDataFile(path)
-    records.foldLeft(List[Route]()) { (list, n) =>
-      list ++ List(Route(
-        n(0).replace("\"", ""),
-        n(2).replace("\"", ""),
-        n(4).replace("\"", ""),
-        n(7).toInt
-      ))
-    }
-  }
+  /** Load a list of [[Routes]]s, given a path to a CSV file. */
+  private def loadRoutes(path: String): List[Route] = loadCSVDataFile[Route](path)
 }
