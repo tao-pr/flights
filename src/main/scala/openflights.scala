@@ -70,10 +70,10 @@ object OpenFlights {
   lazy val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
 
   private def loadCSVDataFile(path: String): List[Array[String]] = {
-    val stream: InputStream = getClass.getResourceAsStream(path)
-    val lines = io.Source.fromInputStream(stream).getLines
-    val records = lines.map { line => line.split(",").map(_.trim) }
-    records.toList
+    val source = io.Source.fromURL(getClass.getResource(path))
+    val records = source.getLines.map { line => line.split(",").map(_.trim) }.toList
+    source.close()
+    records
   }
 
   private def loadAirlinesAsMap(path: String): Map[String, List[Airline]] = {
