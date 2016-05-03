@@ -45,12 +45,37 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
   // Distance in metres between the source airport
   // and the destination airport
   def distance() = Geo.distance(srcLat, srcLng, dstLat, dstLng)
+
+  def prettyPrint(prefix: String = "") {
+    println(prefix + Console.CYAN + route.airlineCode + " ✈️ " +
+      Console.GREEN + route.airportSourceCode + " ➡️ " + route.airportDestCode + " " +
+      Console.WHITE + route.numStops.toString + " stops " +
+      Console.YELLOW + distance() / 1000 + " km" +
+      Console.RESET)
+  }
 }
 
 /**
  * OpenFlights data source handler
  */
 object OpenFlights {
+
+  /**
+   * Mapping of an airport code -> Airport
+   */
+  type AirportMap = Map[String, Airport]
+
+  /**
+   * Mapping of a city -> [[Airport]]s
+   */
+  type AirportCityMap = Map[String, List[Airport]]
+
+  /**
+   * Mapping of source city -> Destination city -> [[Route]]s
+   */
+  type DestinationMap = Map[String, List[Route]]
+  type RouteMap = Map[String, DestinationMap]
+
   /**
    * A mapping of two-letter airline codes to the airlines that have used that
    * code. It is possible for the codes of defunct airlines to be reassigned.
@@ -60,12 +85,12 @@ object OpenFlights {
   /**
    * A mapping of city names to the [[Airport]]s located in that city.
    */
-  lazy val airports: Map[String, List[Airport]] = loadAirportsAsMap("/data/openflights/airports.dat")
+  lazy val (airports: AirportMap, cityAirports: AirportCityMap) = loadAirportsAsMap("/data/openflights/airports.dat")
 
   /**
    * A mapping of [[Route]]s keyed by their (source, destination) pairs.
    */
-  lazy val routes: Map[RouteKey, List[Route]] = loadRoutesAsMap("/data/openflights/routes.dat")
+  lazy val routes: RouteMap = loadRoutesAsMap("/data/openflights/routes.dat")
 
   private def loadCSVDataFile(path: String): List[Array[String]] = {
     val source = io.Source.fromURL(getClass.getResource(path))
@@ -105,11 +130,20 @@ object OpenFlights {
     }
   }
 
-  private def loadAirportsAsMap(path: String): Map[String, List[Airport]] = {
+  /**
+   * Load airport mappings from the data file.
+   * This function potentially produces a tuple of two mappings:
+   * - Mapping from airport code -> airport
+   * - Mapping from city -> [airport] list
+   */
+  private def loadAirportsAsMap(path: String): (AirportMap, AirportCityMap) = {
     val records = loadCSVDataFile(path)
-    val index = Map.empty[String, List[Airport]].withDefaultValue(List())
+    val airportMap = Map.empty[String, Airport]
+    val airportCity = Map.empty[String, List[Airport]].withDefaultValue(List())
 
-    records.foldLeft(index) { (index, n) =>
+    records.foldLeft((airportMap, airportCity)) { (mappings, n) =>
+      val (airportMap, airportCity) = mappings
+
       val name = n(1).replace("\"", "")
 
       // In case the city has a comma, it will be unintentionally split so we
@@ -132,9 +166,12 @@ object OpenFlights {
         Airport(code, name, city, country, lat, lng)
       }
 
+      // Update both maps
       val city = airport.city
-      index(city) = airport +: index(city)
-      index
+      airportCity(city) = airport +: airportCity(city)
+      airportMap(airport.code) = airport
+
+      (airportMap, airportCity)
     }
   }
 
@@ -165,16 +202,16 @@ object OpenFlights {
     }
   }
 
-  private def loadRoutesAsMap(path: String): Map[RouteKey, List[Route]] = {
+  private def loadRoutesAsMap(path: String): RouteMap = {
     val records = loadCSVDataFile(path)
-    val index = Map.empty[RouteKey, List[Route]].withDefaultValue(List())
+    val initialMap = Map.empty[String, List[Route]]
+      .withDefaultValue(List())
+    val index = Map.empty[String, DestinationMap]
+      .withDefaultValue(initialMap)
 
     records.foldLeft(index) { (index, n) =>
       var src = n(2).replace("\"", "")
       var dst = n(4).replace("\"", "")
-
-      // Both src and dst airport codes as a key
-      var routeKey = RouteKey(src, dst)
       var route = Route(
         n(0).replace("\"", ""),
         src,
@@ -182,7 +219,13 @@ object OpenFlights {
         n(7).toInt
       )
 
-      index(routeKey) = route +: index(routeKey)
+      // Ensure mapping: source -> dest -> [Route]
+      if (!index.contains(src))
+        index(src) = Map()
+      if (!index(src).contains(dst))
+        index(src)(dst) = List(route)
+      else
+        index(src)(dst) = route +: index(src)(dst)
       index
     }
   }

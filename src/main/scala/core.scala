@@ -20,13 +20,21 @@ object Core extends App {
 
   // Find direct flights between two cities
   val routesDirect = RouteMap.findCityRoutes(citySource, cityDest)
+  var routesIndirect = List[List[GeoRoute]]()
+
+  if (maxDegree > 1) {
+    // Find indirect flights between two cities
+    routesIndirect = RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree)
+  }
+
+  // Report time!
+  println(Console.MAGENTA + "[Indirect flights]" + Console.RESET)
+  routesIndirect foreach { routes =>
+    println(Console.CYAN + "[ROUTE]" + Console.RESET)
+    routes.foreach { _.prettyPrint("   ") }
+  }
+
   println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
   routesDirect foreach { _.prettyPrint() }
 
-  // Find indirect flights between two cities
-  val routesIndirect = RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree)
-  println(Console.MAGENTA + "[Indirect flights]" + Console.RESET)
-
-  // TAOTODO:
-  routesIndirect foreach { _.prettyPrint() }
 }
