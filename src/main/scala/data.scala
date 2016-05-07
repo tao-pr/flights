@@ -79,11 +79,5 @@ object OpenFlightsData {
     db.run(actions)
   }
 
-  /**
-   * Flush occupied resources
-   */
-  def dispose() {
-    db.close
-  }
 }
 

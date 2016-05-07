@@ -62,11 +62,6 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
 object OpenFlights {
 
   /**
-   * Database handler to the H2 instance via Slick
-   */
-  val db = Database.forConfig("flightDB")
-
-  /**
    * Mapping of an airport code -> Airport
    */
   type AirportMap = Map[String, Airport]
