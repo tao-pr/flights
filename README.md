@@ -16,7 +16,9 @@ specifically configured for any particular IDE so using
 just `sbt` to build and run the project is fine.
 
 - [Scala](http://www.scala-lang.org/download/)
-- [Apache Spark](http://spark.apache.org/downloads.html)
+- [H2 database](http://www.h2database.com/html/main.html)
+
+> For OSX users, you may install **H2** with `brew install h2`
 
 ## License
 
