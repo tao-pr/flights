@@ -5,24 +5,46 @@ import kantan.csv.ops.CsvInputOps
 
 object RawDataset {
 
-  /**
-   * Representative types of the CSV rows
+  /** 
+   * Representative tuples of CSV rows
    */
-  type AirlineCsvRow = (Long, String, String, String)
-  type AirportCsvRow = (String, String, String, String, Float, Float)
-  type RouteCsvRow   = (String, String, String, Int)
+  type AirlineTuple = (Long, String, String, String)
+  type AirportTuple = (String, String, String, String, Float, Float)
+  type RouteTuple   = (String, String, String, Int)
+
+  /**
+   * Representative classes of the CSV rows
+   */
+  case class AirlineCsvRow(id:Long, code:String, name:String, country:String){
+    def toTuple:AirlineTuple = (id,code,name,country)
+  }
+
+  case class AirportCsvRow(code:String, name:String, city:String, country:String, lat:Float, lng:Float){
+    def toTuple:AirportTuple = (code,name,city,country,lat,lng)  
+  }
+
+  case class RouteCsvRow(airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int){
+    def toTuple:RouteTuple = (airlineCode,airportSourceCode,airportDestCode,numStops)
+  }
+
+
+  // Decoders that tell kantan.csv how to construct our case classes from the raw data
+  private implicit val airportDecoder: RowDecoder[AirportCsvRow] = RowDecoder.decoder6(AirportCsvRow.apply)(4, 1, 2, 3, 6, 7)
+  private implicit val airlineDecoder: RowDecoder[AirlineCsvRow] = RowDecoder.decoder4(AirlineCsvRow.apply)(0, 4, 1, 6)
+  private implicit val routeDecoder: RowDecoder[RouteCsvRow] = RowDecoder.decoder4(RouteCsvRow.apply)(0, 2, 4, 7)
+
 
   /**
    * A plain list of airline tuple records read from the CSV dataset.
    */
-  lazy val airlines: List[AirlineCsvRow] = loadCSV[](
+  lazy val airlines: List[AirlineCsvRow] = loadCSV[AirlineCsvRow](
     "/data/openflights/airlines.dat"
   )
 
   /**
    * A plain of airport tuple records read from the CSV dataset
    */
-  lazy val airports: List[AirportCsvRow] = loadCSV[](
+  lazy val airports: List[AirportCsvRow] = loadCSV[AirportCsvRow](
     "/data/openflights/airports.dat"
   )
 

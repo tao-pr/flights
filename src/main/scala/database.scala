@@ -4,7 +4,7 @@ import slick.driver.H2Driver.api._
 import scala.concurrent.ExecutionContext.Implicits.global
 import starcolon.flights.rawdata._
 
-class Airlines(tag: Tag) extends Table[AirlineCsvRow](tag, "AIRLINES") {
+class Airlines(tag: Tag) extends Table[AirlineTuple](tag, "AIRLINES") {
   def id = column[Long]("id")
   def code = column[String]("code")
   def name = column[String]("name")
@@ -17,7 +17,7 @@ class Airlines(tag: Tag) extends Table[AirlineCsvRow](tag, "AIRLINES") {
   }
 }
 
-class Airports(tag: Tag) extends Table[AirportCsvRow](tag, "AIRPORTS") {
+class Airports(tag: Tag) extends Table[AirportTuple](tag, "AIRPORTS") {
   def code = column[String]("code")
   def name = column[String]("name")
   def city = column[String]("city")
@@ -37,7 +37,7 @@ class Airports(tag: Tag) extends Table[AirportCsvRow](tag, "AIRPORTS") {
   def isInCountry(_cn: String) = country === _cn
 }
 
-class Routes(tag: Tag) extends Table[RouteCsvRow](tag, "ROUTES") {
+class Routes(tag: Tag) extends Table[RouteTuple](tag, "ROUTES") {
   def airlineCode = column[String]("airline")
   def airportSourceCode = column[String]("src")
   def airportDestCode = column[String]("dst")
@@ -88,11 +88,11 @@ object OpenFlightsDatabase {
   /**
    * Populate airline records to the underlying database
    */
-  def populateAirlines(records: Seq[(Long, String, String, String)]) {
+  def populateAirlines(records: Seq[AirlineCsvRow]) {
     val actions = DBIO.seq(
       airlines.schema.create,
       // Bulk insert
-      airlines ++= records
+      airlines ++= records.map(_.toTuple)
     )
     db.run(actions)
   }
@@ -100,11 +100,11 @@ object OpenFlightsDatabase {
   /**
    * Poluate airport records to the underlying database
    */
-  def populateAirports(records: Seq[(String, String, String, String, Float, Float)]) {
+  def populateAirports(records: Seq[AirportCsvRow]) {
     val actions = DBIO.seq(
       airports.schema.create,
       // Bulk insert
-      airports ++= records
+      airports ++= records.map(_.toTuple)
     )
     db.run(actions)
   }
@@ -112,11 +112,11 @@ object OpenFlightsDatabase {
   /**
    * Populate route records to the underlying database
    */
-  def populateRoutes(records: Seq[(String, String, String, Int)]) {
+  def populateRoutes(records: Seq[RouteCsvRow]) {
     val actions = DBIO.seq(
       routes.schema.create,
       // Bulk insert
-      routes ++= records
+      routes ++= records.map(_.toTuple)
     )
     db.run(actions)
   }
