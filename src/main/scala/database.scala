@@ -1,9 +1,10 @@
-package starcolon.flights.data
+package starcolon.flights.database
 
 import slick.driver.H2Driver.api._
 import scala.concurrent.ExecutionContext.Implicits.global
+import starcolon.flights.rawdata._
 
-class Airlines(tag: Tag) extends Table[(Long, String, String, String)](tag, "AIRLINES") {
+class Airlines(tag: Tag) extends Table[AirlineCsvRow](tag, "AIRLINES") {
   def id = column[Long]("id")
   def code = column[String]("code")
   def name = column[String]("name")
@@ -16,7 +17,7 @@ class Airlines(tag: Tag) extends Table[(Long, String, String, String)](tag, "AIR
   }
 }
 
-class Airports(tag: Tag) extends Table[(String, String, String, String, Float, Float)](tag, "AIRPORTS") {
+class Airports(tag: Tag) extends Table[AirportCsvRow](tag, "AIRPORTS") {
   def code = column[String]("code")
   def name = column[String]("name")
   def city = column[String]("city")
@@ -36,7 +37,7 @@ class Airports(tag: Tag) extends Table[(String, String, String, String, Float, F
   def isInCountry(_cn: String) = country === _cn
 }
 
-class Routes(tag: Tag) extends Table[(String, String, String, Int)](tag, "ROUTES") {
+class Routes(tag: Tag) extends Table[RouteCsvRow](tag, "ROUTES") {
   def airlineCode = column[String]("airline")
   def airportSourceCode = column[String]("src")
   def airportDestCode = column[String]("dst")
@@ -55,7 +56,25 @@ class Routes(tag: Tag) extends Table[(String, String, String, Int)](tag, "ROUTES
   def isOperatedBy(_airline: String) = airlineCode === _airline
 }
 
-object OpenFlightsData {
+/**
+ * Another version of Route class with geolocations
+ */
+case class GeoRoute(route: Routes, srcLat: Float, srcLng: Float, dstLat: Float, dstLng: Float) {
+  // Distance in metres between the source airport
+  // and the destination airport
+  def distance() = Geo.distance(srcLat, srcLng, dstLat, dstLng)
+
+  def prettyPrint(prefix: String = "") {
+    println(prefix + Console.CYAN + route.airlineCode + " ✈️ " +
+      Console.GREEN + route.airportSourceCode + " ➡️ " + route.airportDestCode + " " +
+      Console.WHITE + route.numStops.toString + " stops " +
+      Console.YELLOW + distance() / 1000 + " km" +
+      Console.RESET)
+  }
+}
+
+
+object OpenFlightsDatabase {
 
   /**
    * Database objects
