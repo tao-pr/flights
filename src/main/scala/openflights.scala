@@ -1,5 +1,6 @@
 package starcolon.flights.openflights
 
+import starcolon.flights.data._
 import starcolon.flights.geo.Geo
 import scala.collection.mutable.Map
 
@@ -54,7 +55,6 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
       Console.RESET)
   }
 }
-
 
 /**
  * OpenFlights data source handler
