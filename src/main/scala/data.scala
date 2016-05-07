@@ -10,6 +10,10 @@ class Airlines(tag: Tag) extends Table[(Long, String, String, String)](tag, "AIR
   def country = column[String]("country")
 
   def * = (id, code, name, country)
+
+  def prettyPrint(): Unit = {
+    println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
+  }
 }
 
 class Airports(tag: Tag) extends Table[(String, String, String, String, Float, Float)](tag, "AIRPORTS") {
@@ -21,6 +25,15 @@ class Airports(tag: Tag) extends Table[(String, String, String, String, Float, F
   def lng = column[Float]("lng")
 
   def * = (code, name, city, country, lat, lng)
+
+  def prettyPrint(): Unit = {
+    println("🏠 " + Console.CYAN + name + " (" + code + ") " +
+      Console.WHITE + city + "/" + country + Console.RESET)
+  }
+
+  def isValidAirport() = code.length > 0
+  def isIn(_city: String) = city === _city
+  def isInCountry(_cn: String) = country === _cn
 }
 
 class Routes(tag: Tag) extends Table[(String, String, String, Int)](tag, "ROUTES") {
@@ -30,6 +43,16 @@ class Routes(tag: Tag) extends Table[(String, String, String, Int)](tag, "ROUTES
   def numStops = column[Int]("numstops")
 
   def * = (airlineCode, airportSourceCode, airportDestCode, numStops)
+
+  def prettyPrint(): Unit = {
+    println(Console.CYAN + airlineCode + " ✈️ " +
+      Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " +
+      Console.WHITE + numStops.toString + " stops" + Console.RESET)
+  }
+
+  def startsAt(_airportCode: String) = airportSourceCode === _airportCode
+  def endsAt(_airportCode: String) = airportDestCode === _airportCode
+  def isOperatedBy(_airline: String) = airlineCode === _airline
 }
 
 object OpenFlightsData {
