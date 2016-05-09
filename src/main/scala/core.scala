@@ -4,7 +4,6 @@ package starcolon.flights.core
  * Core module of Flights
  */
 object Core extends App {
-  import starcolon.flights.openflights._
   import starcolon.flights.routemap._
   import starcolon.flights.geo._
   import scala.io.StdIn.{ readLine, readInt }
@@ -18,6 +17,7 @@ object Core extends App {
 
   println(citySource + " ✈ ️ " + cityDest)
 
+  /*
   // Find direct flights between two cities
   val routesDirect = RouteMap.findCityRoutes(citySource, cityDest)
   var routesIndirect = List[List[GeoRoute]]()
@@ -36,5 +36,5 @@ object Core extends App {
 
   println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
   routesDirect foreach { _.prettyPrint() }
-
+  */
 }

@@ -3,21 +3,28 @@ package starcolon.flights.database
 import slick.driver.H2Driver.api._
 import scala.concurrent.ExecutionContext.Implicits.global
 import starcolon.flights.rawdata._
+import starcolon.flights.rawdata.RawDataset._
 
-class Airlines(tag: Tag) extends Table[AirlineTuple](tag, "AIRLINES") {
+/**
+ * Airline table for Slick interface
+ */
+class Airlines(tag: Tag) extends Table[Airline](tag, "AIRLINES") {
   def id = column[Long]("id")
   def code = column[String]("code")
   def name = column[String]("name")
   def country = column[String]("country")
 
-  def * = (id, code, name, country)
+  def * = (id, code, name, country) <> (Airline.tupled, Airline.unapply)
 
   def prettyPrint(): Unit = {
     println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
   }
 }
 
-class Airports(tag: Tag) extends Table[AirportTuple](tag, "AIRPORTS") {
+/**
+ * Airport table for Slick interface
+ */
+class Airports(tag: Tag) extends Table[Airport](tag, "AIRPORTS") {
   def code = column[String]("code")
   def name = column[String]("name")
   def city = column[String]("city")
@@ -25,7 +32,7 @@ class Airports(tag: Tag) extends Table[AirportTuple](tag, "AIRPORTS") {
   def lat = column[Float]("lat")
   def lng = column[Float]("lng")
 
-  def * = (code, name, city, country, lat, lng)
+  def * = (code, name, city, country, lat, lng) <> (Airport.tupled, Airport.unapply)
 
   def prettyPrint(): Unit = {
     println("🏠 " + Console.CYAN + name + " (" + code + ") " +
@@ -37,13 +44,16 @@ class Airports(tag: Tag) extends Table[AirportTuple](tag, "AIRPORTS") {
   def isInCountry(_cn: String) = country === _cn
 }
 
-class Routes(tag: Tag) extends Table[RouteTuple](tag, "ROUTES") {
+/**
+ * Route table for Slick interface
+ */
+class Routes(tag: Tag) extends Table[Route](tag, "ROUTES") {
   def airlineCode = column[String]("airline")
   def airportSourceCode = column[String]("src")
   def airportDestCode = column[String]("dst")
   def numStops = column[Int]("numstops")
 
-  def * = (airlineCode, airportSourceCode, airportDestCode, numStops)
+  def * = (airlineCode, airportSourceCode, airportDestCode, numStops) <> (Route.tupled, Route.unapply)
 
   def prettyPrint(): Unit = {
     println(Console.CYAN + airlineCode + " ✈️ " +
@@ -56,30 +66,12 @@ class Routes(tag: Tag) extends Table[RouteTuple](tag, "ROUTES") {
   def isOperatedBy(_airline: String) = airlineCode === _airline
 }
 
-/**
- * Another version of Route class with geolocations
- */
-case class GeoRoute(route: Routes, srcLat: Float, srcLng: Float, dstLat: Float, dstLng: Float) {
-  // Distance in metres between the source airport
-  // and the destination airport
-  def distance() = Geo.distance(srcLat, srcLng, dstLat, dstLng)
-
-  def prettyPrint(prefix: String = "") {
-    println(prefix + Console.CYAN + route.airlineCode + " ✈️ " +
-      Console.GREEN + route.airportSourceCode + " ➡️ " + route.airportDestCode + " " +
-      Console.WHITE + route.numStops.toString + " stops " +
-      Console.YELLOW + distance() / 1000 + " km" +
-      Console.RESET)
-  }
-}
-
-
-object OpenFlightsDatabase {
+object OpenFlightsDB {
 
   /**
    * Database objects
    */
-  val db = Database.forConfig("flightDB")
+  private val db = Database.forConfig("flightDB")
 
   val airlines = TableQuery[Airlines]
   val airports = TableQuery[Airports]
@@ -88,11 +80,11 @@ object OpenFlightsDatabase {
   /**
    * Populate airline records to the underlying database
    */
-  def populateAirlines(records: Seq[AirlineCsvRow]) {
+  def populateAirlines(records: Seq[Airline]) {
     val actions = DBIO.seq(
       airlines.schema.create,
       // Bulk insert
-      airlines ++= records.map(_.toTuple)
+      airlines ++= records
     )
     db.run(actions)
   }
@@ -100,11 +92,11 @@ object OpenFlightsDatabase {
   /**
    * Poluate airport records to the underlying database
    */
-  def populateAirports(records: Seq[AirportCsvRow]) {
+  def populateAirports(records: Seq[Airport]) {
     val actions = DBIO.seq(
       airports.schema.create,
       // Bulk insert
-      airports ++= records.map(_.toTuple)
+      airports ++= records
     )
     db.run(actions)
   }
@@ -112,11 +104,11 @@ object OpenFlightsDatabase {
   /**
    * Populate route records to the underlying database
    */
-  def populateRoutes(records: Seq[RouteCsvRow]) {
+  def populateRoutes(records: Seq[Route]) {
     val actions = DBIO.seq(
       routes.schema.create,
       // Bulk insert
-      routes ++= records.map(_.toTuple)
+      routes ++= records
     )
     db.run(actions)
   }
