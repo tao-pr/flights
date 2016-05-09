@@ -1,6 +1,7 @@
 package starcolon.flights.database
 
 import slick.driver.H2Driver.api._
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import starcolon.flights.rawdata._
 import starcolon.flights.rawdata.RawDataset._
@@ -15,10 +16,6 @@ class Airlines(tag: Tag) extends Table[Airline](tag, "AIRLINES") {
   def country = column[String]("country")
 
   def * = (id, code, name, country) <> (Airline.tupled, Airline.unapply)
-
-  def prettyPrint(): Unit = {
-    println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
-  }
 }
 
 /**
@@ -33,15 +30,6 @@ class Airports(tag: Tag) extends Table[Airport](tag, "AIRPORTS") {
   def lng = column[Float]("lng")
 
   def * = (code, name, city, country, lat, lng) <> (Airport.tupled, Airport.unapply)
-
-  def prettyPrint(): Unit = {
-    println("🏠 " + Console.CYAN + name + " (" + code + ") " +
-      Console.WHITE + city + "/" + country + Console.RESET)
-  }
-
-  def isValidAirport() = code.length > 0
-  def isIn(_city: String) = city === _city
-  def isInCountry(_cn: String) = country === _cn
 }
 
 /**
@@ -54,16 +42,6 @@ class Routes(tag: Tag) extends Table[Route](tag, "ROUTES") {
   def numStops = column[Int]("numstops")
 
   def * = (airlineCode, airportSourceCode, airportDestCode, numStops) <> (Route.tupled, Route.unapply)
-
-  def prettyPrint(): Unit = {
-    println(Console.CYAN + airlineCode + " ✈️ " +
-      Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " +
-      Console.WHITE + numStops.toString + " stops" + Console.RESET)
-  }
-
-  def startsAt(_airportCode: String) = airportSourceCode === _airportCode
-  def endsAt(_airportCode: String) = airportDestCode === _airportCode
-  def isOperatedBy(_airline: String) = airlineCode === _airline
 }
 
 object OpenFlightsDB {
@@ -113,5 +91,13 @@ object OpenFlightsDB {
     db.run(actions)
   }
 
+  def findAirports(city: String): Future[Seq[Airport]] = {
+    val query = airports
+      .filter(a => a.code.length > 0 && a.city === city)
+      .result
+
+    // Compile and run the query
+    return db.run(query)
+  }
 }
 

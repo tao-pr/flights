@@ -30,33 +30,24 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
  * Route mapper/finder utility
  */
 object RouteMap {
-  /**
-   * Find all airports located in a particular city
-   *
-   * REVIEW: The signature of the return type looks just odd.
-   *         Nice to have it simplified.
-   */
-  def findAirports(city: String): Query[Airports, Airports#TableElementType, Seq] = {
-    return OpenFlightsDB.airports.filter(n => n.isIn(city) && n.isValidAirport)
-  }
 
   /**
    * Find all routes between two cities
    */
   def findCityRoutes(citySrc: String, cityDest: String): List[GeoRoute] = {
-    val srcAirports = findAirports(citySrc)
-    val dstAirports = findAirports(cityDest)
 
-    srcAirports.flatMap(a => List[GeoRoute]())
+    // Execute queries and reap the collection of results
+    val srcAirports = OpenFlightsDB.findAirports(citySrc)
+    val dstAirports = OpenFlightsDB.findAirports(cityDest)
 
-    // srcAirports.flatMap(src =>
-    //   dstAirports.map(dst =>
-    //     findAirportRoutes(src, dst).list).list)
+    for (src <- srcAirports)
+      yield GeoRoute()
 
-    // srcAirports.foldLeft(List[GeoRoute]()) { (route, src) =>
-    //   route ++ dstAirports.foldLeft(List[GeoRoute]()) { (_route, dst) =>
-    //     val r = findAirportRoutes(src, dst)
-    //     _route ++ r
+    // for (src <- srcAirports) {
+    //   for (dst <- dstAirports) {
+    //     val routes = findAirportRoutes(src, dst)
+    //     for (r <- routes)
+    //       yield r
     //   }
     // }
   }
