@@ -40,16 +40,10 @@ object RouteMap {
     val srcAirports = OpenFlightsDB.findAirports(citySrc)
     val dstAirports = OpenFlightsDB.findAirports(cityDest)
 
-    for (src <- srcAirports)
-      yield GeoRoute()
+    // Expand results of airport queries
+    
+    // Promise.all(srcAirports, dstAirports) ???
 
-    // for (src <- srcAirports) {
-    //   for (dst <- dstAirports) {
-    //     val routes = findAirportRoutes(src, dst)
-    //     for (r <- routes)
-    //       yield r
-    //   }
-    // }
   }
 
   /**

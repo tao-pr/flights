@@ -47,10 +47,13 @@ class Routes(tag: Tag) extends Table[Route](tag, "ROUTES") {
 object OpenFlightsDB {
 
   /**
-   * Database objects
+   * FlightDB database handler
    */
   private val db = Database.forConfig("flightDB")
 
+  /**
+   * Data table handlers
+   */
   val airlines = TableQuery[Airlines]
   val airports = TableQuery[Airports]
   val routes = TableQuery[Routes]
@@ -94,6 +97,16 @@ object OpenFlightsDB {
   def findAirports(city: String): Future[Seq[Airport]] = {
     val query = airports
       .filter(a => a.code.length > 0 && a.city === city)
+      .result
+
+    // Compile and run the query
+    return db.run(query)
+  }
+
+  def findAirportRoutes(srcAirport: String, dstAirport: String): Future[Seq[Route]] = {
+    val query = routes
+      .filter(a => a.airportSourceCode === srcAirport &&
+        a.airportDestCode === dstAirport)
       .result
 
     // Compile and run the query
