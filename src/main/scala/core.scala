@@ -13,8 +13,13 @@ object Core extends App {
   // Import airports, airlines and routes
   // from .dat data files to H2 database
   println(Console.CYAN + "Preparing database..." + Console.RESET)
+  // TAOTODO: Following should extract from Future?
   OpenFlightsDB.populateAirlines(RawDataset.airlines)
+  OpenFlightsDB.populateAirports(RawDataset.airports)
+  OpenFlightsDB.populateRoutes(RawDataset.routes)
   println(Console.CYAN + "Database ready" + Console.RESET)
+
+  // TAODEBUG:
 
   // Prompt the user for inputs
   println("Let's find best routes!")

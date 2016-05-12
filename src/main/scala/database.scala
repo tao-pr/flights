@@ -62,6 +62,7 @@ object OpenFlightsDB {
    * Populate airline records to the underlying database
    */
   def populateAirlines(records: Seq[Airline]) {
+    println(s"Airlines: ${records.length} records")
     val actions = DBIO.seq(
       airlines.schema.create,
       // Bulk insert
@@ -74,6 +75,7 @@ object OpenFlightsDB {
    * Poluate airport records to the underlying database
    */
   def populateAirports(records: Seq[Airport]) {
+    println(s"Airports: ${records.length} records")
     val actions = DBIO.seq(
       airports.schema.create,
       // Bulk insert
@@ -86,6 +88,7 @@ object OpenFlightsDB {
    * Populate route records to the underlying database
    */
   def populateRoutes(records: Seq[Route]) {
+    println(s"Routes: ${records.length} records")
     val actions = DBIO.seq(
       routes.schema.create,
       // Bulk insert
