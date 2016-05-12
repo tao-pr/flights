@@ -1,12 +1,20 @@
-package starcolon.flights.core
+package flights.core
 
 /**
  * Core module of Flights
  */
 object Core extends App {
-  import starcolon.flights.routemap._
-  import starcolon.flights.geo._
+  import flights.routemap._
+  import flights.geo._
+  import flights.rawdata._
+  import flights.database._
   import scala.io.StdIn.{ readLine, readInt }
+
+  // Import airports, airlines and routes
+  // from .dat data files to H2 database
+  println(Console.CYAN + "Preparing database...")
+  OpenFlightsDB.populateAirlines(RawDataset.airlines)
+  println(Console.CYAN + "Database ready")
 
   // Prompt the user for inputs
   println("Let's find best routes!")

@@ -1,10 +1,10 @@
-package starcolon.flights.database
+package flights.database
 
 import slick.driver.H2Driver.api._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import starcolon.flights.rawdata._
-import starcolon.flights.rawdata.RawDataset._
+import flights.rawdata._
+import flights.rawdata.RawDataset._
 
 /**
  * Airline table for Slick interface

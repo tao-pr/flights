@@ -1,13 +1,13 @@
-package starcolon.flights.routemap
+package flights.routemap
 
 // REVIEW: Following database dependencies should be disguised
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import starcolon.flights.database._
-import starcolon.flights.geo._
-import starcolon.flights.rawdata.RawDataset._
+import flights.database._
+import flights.geo._
+import flights.rawdata.RawDataset._
 
 /**
  * Geospatial route which connects two airports.
@@ -34,14 +34,17 @@ object RouteMap {
   /**
    * Find all routes between two cities
    */
-  def findCityRoutes(citySrc: String, cityDest: String): List[GeoRoute] = {
+  def findCityRoutes(citySrc: String, cityDest: String) {
 
     // Execute queries and reap the collection of results
     val srcAirports = OpenFlightsDB.findAirports(citySrc)
     val dstAirports = OpenFlightsDB.findAirports(cityDest)
 
     // Expand results of airport queries
-    
+    val routes = for {
+      src <- srcAirports
+    } src foreach (_.prettyPrint)
+
     // Promise.all(srcAirports, dstAirports) ???
 
   }

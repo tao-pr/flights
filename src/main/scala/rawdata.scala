@@ -1,4 +1,4 @@
-package starcolon.flights.rawdata
+package flights.rawdata
 
 object RawDataset {
 

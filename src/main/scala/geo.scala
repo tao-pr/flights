@@ -1,4 +1,4 @@
-package starcolon.flights.geo
+package flights.geo
 
 object Geo {
   /**
