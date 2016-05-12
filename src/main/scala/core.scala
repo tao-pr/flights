@@ -12,9 +12,9 @@ object Core extends App {
 
   // Import airports, airlines and routes
   // from .dat data files to H2 database
-  println(Console.CYAN + "Preparing database...")
+  println(Console.CYAN + "Preparing database..." + Console.RESET)
   OpenFlightsDB.populateAirlines(RawDataset.airlines)
-  println(Console.CYAN + "Database ready")
+  println(Console.CYAN + "Database ready" + Console.RESET)
 
   // Prompt the user for inputs
   println("Let's find best routes!")
