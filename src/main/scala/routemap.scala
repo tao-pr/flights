@@ -7,7 +7,6 @@ import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import flights.database._
 import flights.geo._
 import flights.rawdata.RawDataset._
@@ -45,16 +44,17 @@ object RouteMap {
 
     // Expand all routes which connect from
     // the source airport to any of the destination airports
-    val routes = for {
+    for {
       sources <- srcAirports
       dests <- dstAirports
     } yield sources.flatMap { (src) =>
+      println(src.code) // TAODEBUG:
       dests.flatMap { (dst) =>
+        // TAODEBUG:
+        println(s"${src.code} --> ${dst.code}")
         Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20 seconds)
       }
     }
-
-    routes
   }
 
   /**

@@ -17,7 +17,12 @@ object Core extends App {
   OpenFlightsDB.populateAirlines(RawDataset.airlines)
   OpenFlightsDB.populateAirports(RawDataset.airports)
   OpenFlightsDB.populateRoutes(RawDataset.routes)
+
+  // Show the database summary
+  println(Console.CYAN + "========================" + Console.RESET)
   println(Console.CYAN + "Database ready" + Console.RESET)
+  OpenFlightsDB.summariseRecords()
+  println(Console.CYAN + "========================" + Console.RESET)
 
   // Prompt the user for inputs
   println("Let's find best routes!")
@@ -30,7 +35,8 @@ object Core extends App {
 
   // Find direct flights between two cities
   val routesDirect = RouteMap.findCityRoutes(citySource, cityDest)
-  //routesDirect foreach { _.prettyPrint() }
+  for { routes <- routesDirect }
+    routes foreach { _.prettyPrint() }
 
   // var routesIndirect = List[List[GeoRoute]]()
   // println(Console.MAGENTA + "[Direct flights]" + Console.RESET)

@@ -2,6 +2,9 @@ package flights.database
 
 import slick.driver.H2Driver.api._
 import scala.concurrent.Future
+import scala.language.postfixOps
+import scala.concurrent.{ Future, Await }
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import flights.rawdata._
 import flights.rawdata.RawDataset._
@@ -95,6 +98,16 @@ object OpenFlightsDB {
       routes ++= records
     )
     db.run(actions)
+  }
+
+  def summariseRecords() = {
+    val summary = for {
+      airports <- db.run(airports.result)
+      airlines <- db.run(airlines.result)
+      routes <- db.run(routes.result)
+    } yield println(s"${airports.length} airports, ${airlines.length} airlines, ${routes.length} routes")
+
+    Await.result(summary, 20 seconds)
   }
 
   def findAirports(city: String): Future[Seq[Airport]] = {
