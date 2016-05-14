@@ -23,6 +23,7 @@ object Core extends App {
     job3 <- OpenFlightsDB.populateRoutes(RawDataset.routes)
   } yield (job1, job2, job3)
 
+  // Make sure all data has been imported
   Await.result(importJobs, 100 seconds)
 
   // Show the database summary
@@ -41,9 +42,11 @@ object Core extends App {
   println(citySource + " ✈ ️ " + cityDest)
 
   // Find direct flights between two cities
-  val routesDirect = RouteMap.findCityRoutes(citySource, cityDest)
-  for { routes <- routesDirect }
-    routes foreach { _.prettyPrint() }
+  val routesDirect = Await.result(
+    RouteMap.findCityRoutes(citySource, cityDest),
+    100 seconds
+  )
+  routesDirect foreach { _.prettyPrint() }
 
   // var routesIndirect = List[List[GeoRoute]]()
   // println(Console.MAGENTA + "[Direct flights]" + Console.RESET)

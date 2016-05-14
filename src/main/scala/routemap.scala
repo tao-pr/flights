@@ -48,10 +48,7 @@ object RouteMap {
       sources <- srcAirports
       dests <- dstAirports
     } yield sources.flatMap { (src) =>
-      println(src.code) // TAODEBUG:
       dests.flatMap { (dst) =>
-        // TAODEBUG:
-        println(s"${src.code} --> ${dst.code}")
         Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20 seconds)
       }
     }
@@ -62,8 +59,11 @@ object RouteMap {
    * and end at any of the given list of the destination airports
    */
   def findAirportRoutes(srcAirport: Airport, dstAirports: Seq[Airport]) = Future[Seq[Route]] {
-    dstAirports flatMap { (dst) =>
-      val routes = OpenFlightsDB.findAirportRoutes(srcAirport.code, dst.code)
+    dstAirports flatMap { (dstAirport) =>
+      val routes = OpenFlightsDB.findAirportRoutes(
+        srcAirport.code,
+        dstAirport.code
+      )
       Await.result(routes, 20 seconds)
     }
   }
