@@ -115,5 +115,6 @@ object OpenFlightsDB {
     // Compile and run the query
     return db.run(query)
   }
+
 }
 

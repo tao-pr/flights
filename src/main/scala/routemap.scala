@@ -3,6 +3,9 @@ package flights.routemap
 // REVIEW: Following database dependencies should be disguised
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
+import scala.language.postfixOps
+import scala.concurrent.{ Future, Await }
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import flights.database._
@@ -34,19 +37,35 @@ object RouteMap {
   /**
    * Find all routes between two cities
    */
-  def findCityRoutes(citySrc: String, cityDest: String) {
+  def findCityRoutes(citySrc: String, cityDest: String): Future[Seq[Route]] = {
 
     // Execute queries and reap the collection of results
     val srcAirports = OpenFlightsDB.findAirports(citySrc)
     val dstAirports = OpenFlightsDB.findAirports(cityDest)
 
-    // Expand results of airport queries
+    // Expand all routes which connect from
+    // the source airport to any of the destination airports
     val routes = for {
-      src <- srcAirports
-    } src foreach (_.prettyPrint)
+      sources <- srcAirports
+      dests <- dstAirports
+    } yield sources.flatMap { (src) =>
+      dests.flatMap { (dst) =>
+        Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20 seconds)
+      }
+    }
 
-    // Promise.all(srcAirports, dstAirports) ???
+    routes
+  }
 
+  /**
+   * Find all routes which connect from the specified airport
+   * and end at any of the given list of the destination airports
+   */
+  def findAirportRoutes(srcAirport: Airport, dstAirports: Seq[Airport]) = Future[Seq[Route]] {
+    dstAirports flatMap { (dst) =>
+      val routes = OpenFlightsDB.findAirportRoutes(srcAirport.code, dst.code)
+      Await.result(routes, 20 seconds)
+    }
   }
 
   /**
@@ -64,23 +83,6 @@ object RouteMap {
   //     }
   //   }
   // }
-
-  /**
-   * Find all direct routes between two airports
-   */
-  def findAirportRoutes(airportSrc: Airports, airportDest: Airports): List[GeoRoute] = {
-
-    // if (OpenFlights.routes.contains(airportSrc.code) &&
-    //   OpenFlights.routes(airportSrc.code).contains(airportDest.code))
-    //   return OpenFlights.routes(airportSrc.code)(airportDest.code)
-    //     .map(r => GeoRoute(
-    //       r,
-    //       airportSrc.lat, airportSrc.lng,
-    //       airportDest.lat, airportDest.lng
-    //     ))
-    // else
-    return List[GeoRoute]()
-  }
 
   /**
    * Find all indirect routes between two airports

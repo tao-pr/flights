@@ -9,17 +9,15 @@ object Core extends App {
   import flights.rawdata._
   import flights.database._
   import scala.io.StdIn.{ readLine, readInt }
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   // Import airports, airlines and routes
   // from .dat data files to H2 database
   println(Console.CYAN + "Preparing database..." + Console.RESET)
-  // TAOTODO: Following should extract from Future?
   OpenFlightsDB.populateAirlines(RawDataset.airlines)
   OpenFlightsDB.populateAirports(RawDataset.airports)
   OpenFlightsDB.populateRoutes(RawDataset.routes)
   println(Console.CYAN + "Database ready" + Console.RESET)
-
-  // TAODEBUG:
 
   // Prompt the user for inputs
   println("Let's find best routes!")
@@ -30,16 +28,15 @@ object Core extends App {
 
   println(citySource + " ✈ ️ " + cityDest)
 
-  /*
   // Find direct flights between two cities
   val routesDirect = RouteMap.findCityRoutes(citySource, cityDest)
-  var routesIndirect = List[List[GeoRoute]]()
+  //routesDirect foreach { _.prettyPrint() }
 
-  if (maxDegree > 1) {
-    // Find indirect flights between two cities
-    routesIndirect = RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree)
-  }
+  // var routesIndirect = List[List[GeoRoute]]()
+  // println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
+  // routesDirect foreach { _.prettyPrint() }
 
+  /*
   // Report time!
   println(Console.MAGENTA + "[Indirect flights]" + Console.RESET)
   routesIndirect foreach { routes =>
@@ -47,7 +44,6 @@ object Core extends App {
     routes.foreach { _.prettyPrint("   ") }
   }
 
-  println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
-  routesDirect foreach { _.prettyPrint() }
+  
   */
 }
