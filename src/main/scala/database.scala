@@ -119,6 +119,15 @@ object OpenFlightsDB {
     return db.run(query)
   }
 
+  def findAirportByCode(airportCode: String): Future[Seq[Airport]] = {
+    val query = airports
+      .filter(a => a.code === airportCode)
+      .result
+
+    // Compile and run the query
+    return db.run(query)
+  }
+
   def findAirportRoutes(srcAirport: String, dstAirport: String): Future[Seq[Route]] = {
     val query = routes
       .filter(a =>

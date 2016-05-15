@@ -4,6 +4,7 @@ package flights.routemap
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
 import scala.Either
+import scala.collection.immutable.{ Iterable }
 import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
@@ -13,6 +14,7 @@ import flights.geo._
 import flights.rawdata.RawDataset._
 
 /**
+ * TAOTODO: Deprecate this
  * Geospatial route which connects two airports.
  */
 case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, dstLng: Float) {
@@ -29,7 +31,16 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
   }
 }
 
-case class ConnectedRoutes(routes: Seq[GeoRoute]) {
+/**
+ * Link between two airports and its operating airlines
+ */
+case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) {
+  def distance(): Float = {
+    Geo.distance(sourceAirport.lat, sourceAirport.lng, destAirport.lat, destAirport.lng)
+  }
+}
+
+case class ConnectedRoutes(routes: Seq[AirportLink]) {
 
   /**
    * Compute the aggregated travelling distance
@@ -52,7 +63,12 @@ case class ConnectedRoutes(routes: Seq[GeoRoute]) {
     case true => {
       val a0 = routes.head
       val a1 = routes.last
-      Geo.distance(a0.srcLat, a0.srcLng, a1.dstLat, a1.dstLng)
+      Geo.distance(
+        a0.sourceAirport.lat,
+        a0.sourceAirport.lng,
+        a1.destAirport.lat,
+        a1.destAirport.lng
+      )
     }
     case false => 0
   }
@@ -115,7 +131,7 @@ object RouteMap {
         cityDest,
         maxConnection
       )
-      Await.result(routes, 20 seconds)
+      routes
     }
   }
 
@@ -125,21 +141,45 @@ object RouteMap {
    * where each of them should not be longer than the given
    * number of connections
    */
-  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Iterable[ConnectedRoutes] = {
     if (maxConnection <= 0)
-      Future { List() }
+      List()
     else {
       // Expand all routes which start at the specified airport
-      val departures = OpenFlightsDB.findDepartureRoutes(srcAirport.code)
+      val departures = Await.result(
+        OpenFlightsDB.findDepartureRoutes(srcAirport.code),
+        30 seconds
+      )
 
-      val routes = departures flatMap { (rs) =>
-        Future { List() }
-      }
+      // Group all departure routes by destination airport
+      departures
+        .groupBy(_.airportDestCode)
+        .flatMap { // TAOTOREVIEW: Efficient?
+          case (destAirportCode, routes) =>
 
-      routes.filter(_.length > 0)
+            val airlines = routes.map(_.airlineCode).toList
+            val destAirport = Await.result(
+              OpenFlightsDB.findAirportByCode(destAirportCode),
+              30 seconds
+            ).head
+
+            // Final city reached
+            if (destAirport.city == cityFinalDest) {
+              val links = routes.map(r => AirportLink(srcAirport, destAirport, airlines))
+              List(ConnectedRoutes(links))
+            } // Still need to explore further
+            else {
+
+              // TAOTODO:
+              List()
+            }
+        }
     }
   }
 
+  /**
+   * Find the city where the given route arrives at
+   */
   def getDestCityOfRoute(route: Route): String = {
     val (source, dest) = Await.result(
       OpenFlightsDB.findCitiesConnectedByRoute(route),
@@ -148,111 +188,4 @@ object RouteMap {
     dest
   }
 
-  /**
-   * Find indirect routes which connect two cities
-   */
-  // def findCityIndirectRoutes(citySrc: String, cityDest: String, maxDegree: Int): List[List[GeoRoute]] = {
-  //   val srcAirports = findAirports(citySrc).filter(_.isValidAirport)
-  //   val dstAirports = findAirports(cityDest).filter(_.isValidAirport)
-
-  //   // Examine each pair of the src-dst airports
-  //   srcAirports.foldLeft(List[List[GeoRoute]]()) { (route, src) =>
-  //     route ++ dstAirports.foldLeft(List[List[GeoRoute]]()) { (_route, dst) =>
-  //       val rs = findIndirectAirportRoutes(src, dst, maxDegree)
-  //       _route ++ rs
-  //     }
-  //   }
-  // }
-
-  /**
-   * Find all indirect routes between two airports
-   * There is at least one connecting airport between the two.
-   */
-  // def findIndirectAirportRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int): List[List[GeoRoute]] = {
-
-  //   // Perform a **greedy** depth-first-search
-  //   return findConnectingRoutes(
-  //     airportSrc,
-  //     airportDest,
-  //     maxDegree,
-  //     List()
-  //   )
-  // }
-
-  /**
-   * Calculate a total distance in metre of the routes
-   */
-  private def totalRouteDistance(routes: List[GeoRoute]): Float = {
-    routes.map(_.distance).sum
-  }
-
-  /**
-   * Find routes which connect two airports.
-   * The function may return multiple possible routes which it finds.
-   */
-  // private def findConnectingRoutes(airportSrc: Airport, airportDest: Airport, maxDegree: Int, prevRoute: List[GeoRoute]): List[List[GeoRoute]] = {
-  //   // Stopping criterion
-  //   if (maxDegree <= 0)
-  //     return List()
-
-  //   // TAOTODO: Other stopping criteria:
-  //   // - Too large total distance
-  //   // - Too large one single distance of a flight
-
-  //   println(Console.CYAN + "==================================" + Console.RESET)
-  //   println(Console.CYAN + s"[Max ${maxDegree} degrees left]..." + Console.RESET)
-  //   println(Console.GREEN + "Expanding route from: " + prevRoute.map(_.route.airportSourceCode).mkString(" ➡️ ") +
-  //     " " + airportSrc.code + Console.RESET)
-  //   println(Console.CYAN + "==================================" + Console.RESET)
-
-  //   // Expand all routes which start at the source airport
-  //   // (Depth-first)
-  //   val routesFromSrc = OpenFlights.routes(airportSrc.code)
-
-  //   routesFromSrc.foldLeft(List[List[GeoRoute]]()) { (allRoutes, n) =>
-
-  //     val (nextDest, routes) = n
-  //     var allRoutes_ = List[List[GeoRoute]]()
-
-  //     // Skip backward routes or invalid routes
-  //     if (OpenFlights.airports.contains(nextDest) && nextDest != airportSrc.code) {
-  //       val nextDestAirport = OpenFlights.airports(nextDest)
-
-  //       println(airportSrc.code + " to " + nextDest + s" ${routes.length} routes")
-
-  //       // These geolocations are useful for future implementation
-  //       val (lat0, lng0) = (airportSrc.lat, airportSrc.lng)
-  //       val (lat1, lng1) = (nextDestAirport.lat, nextDestAirport.lng)
-
-  //       // Extend the previous routes with the expanded route list
-
-  //       // ENHANCEMENT: List is not good at appending
-  //       // Needs to find a better list-like structure
-  //       val nextRoutes = routes.map(r =>
-  //         prevRoute ++ List(GeoRoute(r, lat0, lng0, lat1, lng1)))
-
-  //       // Finally reaches the final destination?        
-  //       if (nextDest == airportDest.code) {
-  //         println(Console.YELLOW + "Terminal found!" + Console.RESET)
-  //         allRoutes_ = nextRoutes ++ allRoutes
-  //       } else {
-  //         // Find further routes starting from
-  //         // the current landing airport (nextDest)
-  //         val nextRoutes_ = nextRoutes.flatMap(rs => findConnectingRoutes(
-  //           nextDestAirport,
-  //           airportDest,
-  //           maxDegree - 1,
-  //           rs
-  //         ))
-
-  //         // Expanded routes could not be empty
-  //         // otherwise, they never end at our final destination airport.
-  //         if (nextRoutes.length > 0)
-  //           allRoutes_ = nextRoutes_ ++ allRoutes
-  //       }
-  //     }
-
-  //     allRoutes_
-  //   }
-  // }
 }
