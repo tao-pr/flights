@@ -3,6 +3,7 @@ package flights.routemap
 // REVIEW: Following database dependencies should be disguised
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
+import scala.Either
 import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
@@ -25,6 +26,35 @@ case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, d
       Console.WHITE + route.numStops.toString + " stops " +
       Console.YELLOW + distance() / 1000 + " km" +
       Console.RESET)
+  }
+}
+
+case class ConnectedRoutes(routes: Seq[GeoRoute]) {
+
+  /**
+   * Compute the aggregated travelling distance
+   * of the entire connected routes
+   */
+  def totalDistance(): Float = routes match {
+    case Seq() => 0
+    case _ => {
+      val rh = routes.head
+      val r_ = routes.tail
+      rh.distance() + ConnectedRoutes(r_).totalDistance()
+    }
+  }
+
+  /**
+   * Compute the distance from the beginning airport
+   * to the final airport of the connected routes
+   */
+  def displacement() = routes.length >= 2 match {
+    case true => {
+      val a0 = routes.head
+      val a1 = routes.last
+      Geo.distance(a0.srcLat, a0.srcLng, a1.dstLat, a1.dstLng)
+    }
+    case false => 0
   }
 }
 
@@ -66,6 +96,55 @@ object RouteMap {
       )
       Await.result(routes, 20 seconds)
     }
+  }
+
+  /**
+   * Find all chained routes which connect two cities
+   */
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[Route]] = {
+
+    // Expand all airports residing in the source city
+    val srcAirports = OpenFlightsDB.findAirports(citySrc)
+
+    // Expand all connected routes recursively
+    for {
+      sources <- srcAirports
+    } yield sources flatMap { (srcAirport) =>
+      findIndirectRoutesFromAirport(
+        srcAirport,
+        cityDest,
+        maxConnection
+      )
+    }
+  }
+
+  /**
+   * Find all connected routes which start at the specified airport
+   * and end at the specified city
+   * where each of them should not be longer than the given
+   * number of connections
+   */
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Future[Seq[GeoRoute]] = {
+    if (maxConnection <= 0)
+      Future { List() }
+    else {
+      // Expand all routes which start at the specified airport
+      val departures = OpenFlightsDB.findDepartureRoutes(srcAirport.code)
+
+      val routes = departures flatMap { (rs) =>
+        Future { List() }
+      }
+
+      routes.filter(_.length > 0)
+    }
+  }
+
+  def getDestCityOfRoute(route: Route): String = {
+    val (source, dest) = Await.result(
+      OpenFlightsDB.findCitiesConnectedByRoute(route),
+      30 seconds
+    )
+    dest
   }
 
   /**

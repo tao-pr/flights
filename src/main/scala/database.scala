@@ -121,12 +121,43 @@ object OpenFlightsDB {
 
   def findAirportRoutes(srcAirport: String, dstAirport: String): Future[Seq[Route]] = {
     val query = routes
-      .filter(a => a.airportSourceCode === srcAirport &&
-        a.airportDestCode === dstAirport)
+      .filter(a =>
+        a.airportSourceCode === srcAirport &&
+          a.airportDestCode === dstAirport)
       .result
 
     // Compile and run the query
     return db.run(query)
+  }
+
+  /**
+   * Find all routes which depart from the specified airport
+   */
+  def findDepartureRoutes(srcAirport: String): Future[Seq[Route]] = {
+    val query = routes
+      .filter(a => a.airportSourceCode === srcAirport)
+      .result
+
+    // Compile and run the query
+    return db.run(query)
+  }
+
+  /**
+   * Find cities at both ends of the route
+   */
+  def findCitiesConnectedByRoute(route: Route): Future[(String, String)] = {
+    val querySrc = airports
+      .filter(a => a.code === route.airportSourceCode)
+      .result
+
+    val queryDst = airports
+      .filter(a => a.code === route.airportDestCode)
+      .result
+
+    for {
+      src <- db.run(querySrc)
+      dst <- db.run(queryDst)
+    } yield (src.head.city, dst.head.city)
   }
 
 }

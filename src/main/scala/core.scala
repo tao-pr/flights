@@ -48,6 +48,8 @@ object Core extends App {
   )
   routesDirect foreach { _.prettyPrint() }
 
+  // Find indirect flights between two cities
+
   // var routesIndirect = List[List[GeoRoute]]()
   // println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
   // routesDirect foreach { _.prettyPrint() }
