@@ -101,7 +101,7 @@ object RouteMap {
   /**
    * Find all chained routes which connect two cities
    */
-  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[Route]] = {
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
 
     // Expand all airports residing in the source city
     val srcAirports = OpenFlightsDB.findAirports(citySrc)
@@ -110,11 +110,12 @@ object RouteMap {
     for {
       sources <- srcAirports
     } yield sources flatMap { (srcAirport) =>
-      findIndirectRoutesFromAirport(
+      val routes = findIndirectRoutesFromAirport(
         srcAirport,
         cityDest,
         maxConnection
       )
+      Await.result(routes, 20 seconds)
     }
   }
 
@@ -124,7 +125,7 @@ object RouteMap {
    * where each of them should not be longer than the given
    * number of connections
    */
-  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Future[Seq[GeoRoute]] = {
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
     if (maxConnection <= 0)
       Future { List() }
     else {
