@@ -43,6 +43,21 @@ case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: L
 case class ConnectedRoutes(routes: Seq[AirportLink]) {
 
   /**
+   * Concatenate two connected routes
+   */
+  def ++(that: ConnectedRoutes): ConnectedRoutes = {
+    ConnectedRoutes(routes ++ that.routes)
+  }
+
+  /**
+   * Prepend an airport link to the underlying connected routes
+   * @return {ConnectedRoutes} resultant connected routes
+   */
+  def prependLink(that: AirportLink): ConnectedRoutes = {
+    ConnectedRoutes(that +: routes)
+  }
+
+  /**
    * Compute the aggregated travelling distance
    * of the entire connected routes
    */
@@ -71,6 +86,10 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
       )
     }
     case false => 0
+  }
+
+  def prettyPrint() {
+    // TAOTODO:
   }
 }
 
@@ -163,15 +182,25 @@ object RouteMap {
               30 seconds
             ).head
 
-            // Final city reached
-            if (destAirport.city == cityFinalDest) {
-              val links = routes.map(r => AirportLink(srcAirport, destAirport, airlines))
-              List(ConnectedRoutes(links))
-            } // Still need to explore further
-            else {
+            val links = routes.map(r => AirportLink(srcAirport, destAirport, airlines))
 
-              // TAOTODO:
-              List()
+            // The expansion ends if all these routes 
+            // end up at the final destination city
+            if (destAirport.city == cityFinalDest) {
+              links.map(r => ConnectedRoutes(Seq(r)))
+            } // Still not the final city? Expand next routes 
+            // starting from this airport we've just landed at
+            else {
+              links.flatMap(l => {
+                val nextRoutes = findIndirectRoutesFromAirport(
+                  destAirport,
+                  cityFinalDest,
+                  maxConnection - 1
+                )
+
+                // Extend the links
+                nextRoutes.map(r => r.prependLink(l))
+              })
             }
         }
     }
