@@ -97,13 +97,13 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
     if (routes.length > 0) {
       routes.foreach(_.prettyPrint("   "))
       println(
-        Console.CYAN + "[ROUTES] " +
+        Console.CYAN + s"[${routes.length} hops] " +
           Console.YELLOW + routes.head.sourceAirport.city +
           Console.RESET + " -> " +
           Console.YELLOW + routes.last.destAirport.city +
           Console.RESET
       )
-      routes.foreach(_.prettyPrint("   "))
+      routes.foreach { _.prettyPrint("   ") }
     }
   }
 }
@@ -192,30 +192,37 @@ object RouteMap {
           case (destAirportCode, routes) =>
 
             val airlines = routes.map(_.airlineCode).toList
-            val destAirport = Await.result(
+            val destAirports = Await.result(
               OpenFlightsDB.findAirportByCode(destAirportCode),
               30 seconds
-            ).head
+            )
 
-            val links = routes.map(r => AirportLink(srcAirport, destAirport, airlines))
+            destAirports.length match {
+              case 0 => List() // No airports found
+              case _ => {
+                val destAirport = destAirports.head
+                val links = routes.map(r =>
+                  AirportLink(srcAirport, destAirport, airlines))
 
-            // The expansion ends if all these routes 
-            // end up at the final destination city
-            if (destAirport.city == cityFinalDest) {
-              links.map(r => ConnectedRoutes(Seq(r)))
-            } // Still not the final city? Expand next routes 
-            // starting from this airport we've just landed at
-            else {
-              links.flatMap(l => {
-                val nextRoutes = findIndirectRoutesFromAirport(
-                  destAirport,
-                  cityFinalDest,
-                  maxConnection - 1
-                )
+                // The expansion ends if all these routes 
+                // end up at the final destination city
+                if (destAirport.city == cityFinalDest) {
+                  links.map(r => ConnectedRoutes(Seq(r)))
+                } // Still not the final city? Expand next routes 
+                // starting from this airport we've just landed at
+                else {
+                  links.flatMap(l => {
+                    val nextRoutes = findIndirectRoutesFromAirport(
+                      destAirport,
+                      cityFinalDest,
+                      maxConnection - 1
+                    )
 
-                // Extend the links
-                nextRoutes.map(r => r.prependLink(l))
-              })
+                    // Extend the links
+                    nextRoutes.map(r => r.prependLink(l))
+                  })
+                }
+              }
             }
         }
     }

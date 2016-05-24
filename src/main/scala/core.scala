@@ -49,19 +49,11 @@ object Core extends App {
   routesDirect foreach { _.prettyPrint() }
 
   // Find indirect flights between two cities
-
-  // var routesIndirect = List[List[GeoRoute]]()
-  // println(Console.MAGENTA + "[Direct flights]" + Console.RESET)
-  // routesDirect foreach { _.prettyPrint() }
-
-  /*
-  // Report time!
-  println(Console.MAGENTA + "[Indirect flights]" + Console.RESET)
-  routesIndirect foreach { routes =>
-    println(Console.CYAN + "[ROUTE]" + Console.RESET)
-    routes.foreach { _.prettyPrint("   ") }
+  if (maxDegree > 1) {
+    val routesIndirect = Await.result(
+      RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree),
+      300 seconds
+    )
+    routesIndirect foreach { _.prettyPrint() }
   }
-
-  
-  */
 }
