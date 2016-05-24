@@ -38,6 +38,11 @@ case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: L
   def distance(): Float = {
     Geo.distance(sourceAirport.lat, sourceAirport.lng, destAirport.lat, destAirport.lng)
   }
+
+  def prettyPrint(prefix: String) {
+    val airlines_ = airlines.mkString(",")
+    println(prefix + Console.GREEN + " ✈ via: " + Console.RESET + airlines_)
+  }
 }
 
 case class ConnectedRoutes(routes: Seq[AirportLink]) {
@@ -89,7 +94,17 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
   }
 
   def prettyPrint() {
-    // TAOTODO:
+    if (routes.length > 0) {
+      routes.foreach(_.prettyPrint("   "))
+      println(
+        Console.CYAN + "[ROUTES] " +
+          Console.YELLOW + routes.head.sourceAirport.city +
+          Console.RESET + " -> " +
+          Console.YELLOW + routes.last.destAirport.city +
+          Console.RESET
+      )
+      routes.foreach(_.prettyPrint("   "))
+    }
   }
 }
 
