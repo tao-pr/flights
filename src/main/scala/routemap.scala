@@ -176,6 +176,10 @@ object RouteMap {
    * number of connections
    */
   def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Iterable[ConnectedRoutes] = {
+
+    // TAODEBUG:
+    println(Console.YELLOW + "Find from: " + Console.RESET + srcAirport.code + ", " + srcAirport.city)
+
     if (maxConnection <= 0)
       List()
     else {
@@ -191,6 +195,9 @@ object RouteMap {
         .flatMap { // TAOTOREVIEW: Efficient?
           case (destAirportCode, routes) =>
 
+            // TAOTODO: Ignore if the route will be extended 
+            // even farther to the final city 
+            // if we choose this route
             val airlines = routes.map(_.airlineCode).toList
             val destAirports = Await.result(
               OpenFlightsDB.findAirportByCode(destAirportCode),

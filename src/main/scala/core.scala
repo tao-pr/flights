@@ -49,7 +49,7 @@ object Core extends App {
   routesDirect foreach { _.prettyPrint() }
 
   // Find indirect flights between two cities
-  if (maxDegree > 1) {
+  if (maxDegree > 0) {
     val routesIndirect = Await.result(
       RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree),
       300 seconds
