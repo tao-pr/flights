@@ -14,24 +14,6 @@ import flights.geo._
 import flights.rawdata.RawDataset._
 
 /**
- * TAOTODO: Deprecate this
- * Geospatial route which connects two airports.
- */
-case class GeoRoute(route: Route, srcLat: Float, srcLng: Float, dstLat: Float, dstLng: Float) {
-  // Distance in metres between the source airport
-  // and the destination airport
-  def distance() = Geo.distance(srcLat, srcLng, dstLat, dstLng)
-
-  def prettyPrint(prefix: String = "") {
-    println(prefix + Console.CYAN + route.airlineCode + " ✈️ " +
-      Console.GREEN + route.airportSourceCode + " ➡️ " + route.airportDestCode + " " +
-      Console.WHITE + route.numStops.toString + " stops " +
-      Console.YELLOW + distance() / 1000 + " km" +
-      Console.RESET)
-  }
-}
-
-/**
  * Link between two airports and its operating airlines
  */
 case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) {
@@ -239,17 +221,13 @@ object RouteMap {
           List(ConnectedRoutes(Seq(link)))
         } else {
           // Expand further routes from the current landed airport
-
-          // TAODEBUG:
-          ////println(Console.YELLOW + s"Expanding route : ${srcAirport.code}: ${srcAirport.city} --> ${destAirport.code}: ${destAirport.city}" + Console.RESET)
-
           val nextRoutes = findIndirectRoutesFromAirport(
             destAirport,
             cityFinalDest,
             maxConnection - 1
           )
 
-          // Extend the links
+          // Assembly all the expanded links
           nextRoutes.map(r => r.prependLink(link))
         }
       }
