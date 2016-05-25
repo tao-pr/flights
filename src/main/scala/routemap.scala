@@ -250,12 +250,7 @@ object RouteMap {
           )
 
           // Extend the links
-          val extendedLinks = nextRoutes.map(r => r.prependLink(link))
-
-          // TAODEBUG:
-          extendedLinks.foreach { _.prettyPrint() }
-
-          extendedLinks
+          nextRoutes.map(r => r.prependLink(link))
         }
       }
     }
