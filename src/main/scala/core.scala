@@ -36,7 +36,10 @@ object Core extends App {
   println("Let's find best routes!")
   val citySource = readLine(Console.CYAN + "Source city: " + Console.RESET)
   val cityDest = readLine(Console.CYAN + "Destination city: " + Console.RESET)
-  print(Console.CYAN + "Max number of stops: " + Console.RESET)
+
+  println(Console.CYAN + "=========================")
+  println(Console.CYAN + "Max number of connections")
+  print(Console.CYAN + "(1 for direct flights only): " + Console.RESET)
   var maxDegree = readInt()
 
   println(citySource + " ✈ ️ " + cityDest)
