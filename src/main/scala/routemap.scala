@@ -177,9 +177,6 @@ object RouteMap {
    */
   def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int): Iterable[ConnectedRoutes] = {
 
-    // TAODEBUG:
-    println(Console.YELLOW + "Find from: " + Console.RESET + srcAirport.code + ", " + srcAirport.city)
-
     if (maxConnection <= 0)
       List()
     else {
@@ -192,46 +189,56 @@ object RouteMap {
       // Group all departure routes by destination airport
       departures
         .groupBy(_.airportDestCode)
-        .flatMap { // TAOTOREVIEW: Efficient?
-          case (destAirportCode, routes) =>
-
-            // TAOTODO: Ignore if the route will be extended 
-            // even farther to the final city 
-            // if we choose this route
-            val airlines = routes.map(_.airlineCode).toList
-            val destAirports = Await.result(
-              OpenFlightsDB.findAirportByCode(destAirportCode),
-              30 seconds
-            )
-
-            destAirports.length match {
-              case 0 => List() // No airports found
-              case _ => {
-                val destAirport = destAirports.head
-                val links = routes.map(r =>
-                  AirportLink(srcAirport, destAirport, airlines))
-
-                // The expansion ends if all these routes 
-                // end up at the final destination city
-                if (destAirport.city == cityFinalDest) {
-                  links.map(r => ConnectedRoutes(Seq(r)))
-                } // Still not the final city? Expand next routes 
-                // starting from this airport we've just landed at
-                else {
-                  links.flatMap(l => {
-                    val nextRoutes = findIndirectRoutesFromAirport(
-                      destAirport,
-                      cityFinalDest,
-                      maxConnection - 1
-                    )
-
-                    // Extend the links
-                    nextRoutes.map(r => r.prependLink(l))
-                  })
-                }
-              }
-            }
+        .flatMap {
+          case (destAirportCode, routes) => expandRoutes(
+            srcAirport,
+            destAirportCode,
+            cityFinalDest,
+            routes,
+            maxConnection
+          )
         }
+    }
+  }
+
+  /**
+   * Expand further routes beginning from the specified airport
+   */
+  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, routes: Seq[Route], maxConnection: Int): Iterable[ConnectedRoutes] = {
+    // TAOTODO: Ignore if the route will be extended 
+    // even farther to the final city 
+    // if we choose this route
+
+    // Treat this as a single common route
+    // operated by multiple airlines
+    val airlines = routes.map(_.airlineCode).toList
+    val destAirports = Await.result(
+      OpenFlightsDB.findAirportByCode(destAirportCode),
+      30 seconds
+    )
+
+    destAirports.length match {
+      case 0 => List() // Unable to locate the destination airport, skip it
+      case _ => {
+        val destAirport = destAirports.head
+        val link = AirportLink(srcAirport, destAirport, airlines)
+
+        // The expansion ends if all these routes 
+        // end up at the final destination city
+        if (destAirport.city == cityFinalDest) {
+          List(ConnectedRoutes(Seq(link)))
+        } else {
+          // Expand further routes from the current landed airport
+          val nextRoutes = findIndirectRoutesFromAirport(
+            destAirport,
+            cityFinalDest,
+            maxConnection - 1
+          )
+
+          // Extend the links
+          nextRoutes.map(r => r.prependLink(link))
+        }
+      }
     }
   }
 
