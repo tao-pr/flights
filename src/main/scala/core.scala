@@ -36,17 +36,17 @@ object Core extends App {
   println("Let's find best routes!")
   val citySource = readLine(Console.CYAN + "Source city: " + Console.RESET)
   val cityDest = readLine(Console.CYAN + "Destination city: " + Console.RESET)
-  print(Console.CYAN + "Max connections: " + Console.RESET)
+  print(Console.CYAN + "Max number of stops: " + Console.RESET)
   var maxDegree = readInt()
 
   println(citySource + " ✈ ️ " + cityDest)
 
   // Find direct flights between two cities
-  val routesDirect = Await.result(
-    RouteMap.findCityRoutes(citySource, cityDest),
-    100 seconds
-  )
-  routesDirect foreach { _.prettyPrint() }
+  // val routesDirect = Await.result(
+  //   RouteMap.findCityRoutes(citySource, cityDest),
+  //   100 seconds
+  // )
+  // routesDirect foreach { _.prettyPrint() }
 
   // Find indirect flights between two cities
   if (maxDegree > 0) {

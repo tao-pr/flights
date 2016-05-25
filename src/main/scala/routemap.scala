@@ -41,7 +41,13 @@ case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: L
 
   def prettyPrint(prefix: String) {
     val airlines_ = airlines.mkString(",")
-    println(prefix + Console.GREEN + " ✈ via: " + Console.RESET + airlines_)
+    println(
+      prefix +
+        sourceAirport.city + " (" + sourceAirport.code + ") → " +
+        destAirport.city + " (" + destAirport.code + ")" +
+        Console.GREEN + " ✈ via: " +
+        Console.RESET + airlines_
+    )
   }
 }
 
@@ -96,11 +102,15 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
   def prettyPrint() {
     if (routes.length > 0) {
       routes.foreach(_.prettyPrint("   "))
+      val chainedSources = routes.map(r =>
+        Console.YELLOW +
+          r.sourceAirport.city + " (" + r.sourceAirport.code + ")" +
+          Console.RESET).mkString(" → ")
+
       println(
         Console.CYAN + s"[${routes.length} hops] " +
-          Console.YELLOW + routes.head.sourceAirport.city +
-          Console.RESET + " -> " +
-          Console.YELLOW + routes.last.destAirport.city +
+          chainedSources + " → " +
+          Console.YELLOW + routes.last.destAirport.city + " (" + routes.last.destAirport.code + ")" +
           Console.RESET
       )
       routes.foreach { _.prettyPrint("   ") }
@@ -229,6 +239,10 @@ object RouteMap {
           List(ConnectedRoutes(Seq(link)))
         } else {
           // Expand further routes from the current landed airport
+
+          // TAODEBUG:
+          ////println(Console.YELLOW + s"Expanding route : ${srcAirport.code}: ${srcAirport.city} --> ${destAirport.code}: ${destAirport.city}" + Console.RESET)
+
           val nextRoutes = findIndirectRoutesFromAirport(
             destAirport,
             cityFinalDest,
@@ -236,7 +250,12 @@ object RouteMap {
           )
 
           // Extend the links
-          nextRoutes.map(r => r.prependLink(link))
+          val extendedLinks = nextRoutes.map(r => r.prependLink(link))
+
+          // TAODEBUG:
+          extendedLinks.foreach { _.prettyPrint() }
+
+          extendedLinks
         }
       }
     }
