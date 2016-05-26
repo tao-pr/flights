@@ -83,7 +83,6 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
 
   def prettyPrint() {
     if (routes.length > 0) {
-      routes.foreach(_.prettyPrint("   "))
       val chainedSources = routes.map(r =>
         Console.YELLOW +
           r.sourceAirport.city + " (" + r.sourceAirport.code + ")" +

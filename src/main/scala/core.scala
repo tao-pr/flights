@@ -34,29 +34,36 @@ object Core extends App {
 
   // Prompt the user for inputs
   println("Let's find best routes!")
-  val citySource = readLine(Console.CYAN + "Source city: " + Console.RESET)
-  val cityDest = readLine(Console.CYAN + "Destination city: " + Console.RESET)
 
-  println(Console.CYAN + "=========================")
-  println(Console.CYAN + "Max number of connections")
-  print(Console.CYAN + "(1 for direct flights only): " + Console.RESET)
-  var maxDegree = readInt()
+  while (true) {
+    println()
+    val citySource = readLine(Console.CYAN + "Source city: " + Console.RESET)
+    val cityDest = readLine(Console.CYAN + "Destination city: " + Console.RESET)
 
-  println(citySource + " ✈ ️ " + cityDest)
+    println(Console.CYAN + "=========================")
+    println(Console.CYAN + "Max number of connections")
+    print(Console.CYAN + "(1 for direct flights only): " + Console.RESET)
+    var maxDegree = readInt()
 
-  // Find direct flights between two cities
-  // val routesDirect = Await.result(
-  //   RouteMap.findCityRoutes(citySource, cityDest),
-  //   100 seconds
-  // )
-  // routesDirect foreach { _.prettyPrint() }
+    println(citySource + " ✈ ️ " + cityDest)
 
-  // Find indirect flights between two cities
-  if (maxDegree > 0) {
-    val routesIndirect = Await.result(
-      RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree),
-      300 seconds
-    )
-    routesIndirect foreach { _.prettyPrint() }
+    // Find direct flights between two cities
+    // val routesDirect = Await.result(
+    //   RouteMap.findCityRoutes(citySource, cityDest),
+    //   100 seconds
+    // )
+    // routesDirect foreach { _.prettyPrint() }
+
+    // Find indirect flights between two cities
+    if (maxDegree > 0) {
+      val routesIndirect = Await.result(
+        RouteMap.findCityIndirectRoutes(citySource, cityDest, maxDegree),
+        300 seconds
+      )
+
+      routesIndirect foreach { _.prettyPrint() }
+    }
+
+    println(Console.GREEN + "Try again, or Ctrl + C to quit" + Console.RESET)
   }
 }
