@@ -154,7 +154,7 @@ object RouteMap {
       val routes = findIndirectRoutesFromAirport(
         srcAirport,
         cityDest,
-        "",
+        Set(),
         maxConnection
       )
       routes
@@ -168,10 +168,10 @@ object RouteMap {
    * number of connections
    * @param {Airport} The airport to start from
    * @param {String} The final destination city we're looking for
-   * @param {String} The city we don't want to land at (usually the city we've just departed)
+   * @param {Set[String]} The list of cities want to skip (usuall cities we departed)
    * @param {Int} Maximum number of connections
    */
-  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, skipCity: String, maxConnection: Int): Iterable[ConnectedRoutes] = {
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, skipCities: Set[String], maxConnection: Int): Iterable[ConnectedRoutes] = {
 
     if (maxConnection <= 0)
       List()
@@ -190,7 +190,7 @@ object RouteMap {
             srcAirport,
             destAirportCode,
             cityFinalDest,
-            skipCity,
+            skipCities,
             routes,
             maxConnection
           )
@@ -201,7 +201,7 @@ object RouteMap {
   /**
    * Expand further routes beginning from the specified airport
    */
-  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCity: String, routes: Seq[Route], maxConnection: Int): Iterable[ConnectedRoutes] = {
+  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCities: Set[String], routes: Seq[Route], maxConnection: Int): Iterable[ConnectedRoutes] = {
     // TAOTODO: Ignore if the route will be extended 
     // even farther to the final city 
     // if we choose this route
@@ -224,14 +224,18 @@ object RouteMap {
         // end up at the final destination city
         if (destAirport.city == cityFinalDest) {
           List(ConnectedRoutes(Seq(link)))
-        } else if (destAirport.city == skipCity) {
+        } // Skip the city we don't want to land at
+        else if (skipCities contains destAirport.city) {
           List()
         } else {
+          // Add the current terminal cities to the exclude list
+          val skipCities_ = skipCities + srcAirport.city
+
           // Expand further routes from the current landed airport
           val nextRoutes = findIndirectRoutesFromAirport(
             destAirport,
             cityFinalDest,
-            srcAirport.city,
+            skipCities_,
             maxConnection - 1
           )
 
