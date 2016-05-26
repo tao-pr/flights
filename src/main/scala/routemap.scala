@@ -142,23 +142,36 @@ object RouteMap {
   /**
    * Find all chained routes which connect two cities
    */
-  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Seq[ConnectedRoutes] = {
 
     // Expand all airports residing in the source city
-    val srcAirports = OpenFlightsDB.findAirports(citySrc)
+    val srcAirports = Await.result(OpenFlightsDB.findAirports(citySrc), 20 seconds)
+
+    // Expand all airports residing in destination city
+    val destAirports = Await.result(OpenFlightsDB.findAirports(cityDest), 20 seconds)
+
+    // Calculate a sample straight distance from the source to the destination
+    val straightDistance = findDistance(srcAirports.head, destAirports.head)
 
     // Expand all connected routes recursively
-    for {
-      sources <- srcAirports
-    } yield sources flatMap { (srcAirport) =>
+    srcAirports flatMap ((srcAirport) => {
       val routes = findIndirectRoutesFromAirport(
         srcAirport,
         cityDest,
         Set(),
-        maxConnection
+        maxConnection,
+        straightDistance
       )
       routes
-    }
+    })
+  }
+
+  /**
+   * Calculate the distance between the source and the destination airport
+   * in metre
+   */
+  def findDistance(srcAirport: Airport, dstAirport: Airport): Float = {
+    Geo.distance(srcAirport.lat, srcAirport.lng, dstAirport.lat, dstAirport.lng)
   }
 
   /**
@@ -170,8 +183,9 @@ object RouteMap {
    * @param {String} The final destination city we're looking for
    * @param {Set[String]} The list of cities want to skip (usuall cities we departed)
    * @param {Int} Maximum number of connections
+   * @param {Float} Straight distance from the source city to the destination city (in metre)
    */
-  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, skipCities: Set[String], maxConnection: Int): Iterable[ConnectedRoutes] = {
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, skipCities: Set[String], maxConnection: Int, straightDistance: Float): Iterable[ConnectedRoutes] = {
 
     if (maxConnection <= 0)
       List()
@@ -192,7 +206,8 @@ object RouteMap {
             cityFinalDest,
             skipCities,
             routes,
-            maxConnection
+            maxConnection,
+            straightDistance
           )
         }
     }
@@ -201,7 +216,7 @@ object RouteMap {
   /**
    * Expand further routes beginning from the specified airport
    */
-  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCities: Set[String], routes: Seq[Route], maxConnection: Int): Iterable[ConnectedRoutes] = {
+  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCities: Set[String], routes: Seq[Route], maxConnection: Int, straightDistance: Float): Iterable[ConnectedRoutes] = {
     // TAOTODO: Ignore if the route will be extended 
     // even farther to the final city 
     // if we choose this route
@@ -227,6 +242,10 @@ object RouteMap {
         } // Skip the city we don't want to land at
         else if (skipCities contains destAirport.city) {
           List()
+        } // Skip if the distance of the link exceeds total straight distance
+        // (Some margin is added for relaxation)
+        else if (link.distance * 1.1 > straightDistance) {
+          List()
         } else {
           // Add the current terminal cities to the exclude list
           val skipCities_ = skipCities + srcAirport.city
@@ -236,7 +255,8 @@ object RouteMap {
             destAirport,
             cityFinalDest,
             skipCities_,
-            maxConnection - 1
+            maxConnection - 1,
+            straightDistance
           )
 
           // Assembly all the expanded links
