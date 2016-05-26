@@ -6,13 +6,6 @@ object RawDataset {
   import kantan.csv.ops.CsvInputOps
 
   /**
-   * Representative tuples of CSV rows
-   */
-  type AirlineTuple = (Long, String, String, String)
-  type AirportTuple = (String, String, String, String, Float, Float)
-  type RouteTuple = (String, String, String, Int)
-
-  /**
    * Representative classes of the CSV rows
    */
   case class Airline(id: Long, code: String, name: String, country: String) {
