@@ -1,13 +1,9 @@
-package flights.core
+package flights
 
 /**
  * Core module of Flights
  */
 object Core extends App {
-  import flights.routemap._
-  import flights.geo._
-  import flights.rawdata._
-  import flights.database._
   import scala.io.StdIn.{ readLine, readInt }
   import scala.language.postfixOps
   import scala.concurrent.{ Future, Await }

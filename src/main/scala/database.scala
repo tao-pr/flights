@@ -1,13 +1,12 @@
-package flights.database
+package flights
 
 import slick.driver.H2Driver.api._
-import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import flights.rawdata._
-import flights.rawdata.RawDataset._
+
+import RawDataset._
 
 /**
  * Airline table for Slick interface

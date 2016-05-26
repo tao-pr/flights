@@ -1,4 +1,4 @@
-package flights.routemap
+package flights
 
 // REVIEW: Following database dependencies should be disguised
 import slick.driver.H2Driver.api._
@@ -9,9 +9,8 @@ import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import flights.database._
-import flights.geo._
-import flights.rawdata.RawDataset._
+
+import RawDataset._
 
 /**
  * Link between two airports and its operating airlines

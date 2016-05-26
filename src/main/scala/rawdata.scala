@@ -1,4 +1,4 @@
-package flights.rawdata
+package flights
 
 object RawDataset {
 
