@@ -9,17 +9,21 @@ import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.math.Ordered.orderingToOrdered
 import flights.database._
 import flights.geo._
 import flights.rawdata.RawDataset._
 
+
 /**
  * Link between two airports and its operating airlines
  */
-case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) {
+case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) extends Ordered[AirportLink] {
   def distance(): Float = {
     Geo.distance(sourceAirport.lat, sourceAirport.lng, destAirport.lat, destAirport.lng)
   }
+
+  def compare(that: AirportLink): Int = distance().compareTo(that.distance())
 
   def prettyPrint(prefix: String) {
     val airlines_ = airlines.mkString(",")
