@@ -20,11 +20,12 @@ object Core extends App {
 
   // Make sure all data has been imported
   Await.result(importJobs, 100.seconds)
+  val summary = Await.result(OpenFlightsDB.recordSummary, 10.seconds)
 
   // Show the database summary
   println(Console.CYAN + "========================" + Console.RESET)
   println(Console.CYAN + "Database ready" + Console.RESET)
-  OpenFlightsDB.summariseRecords()
+  println(summary)
   println(Console.CYAN + "========================" + Console.RESET)
 
   // Prompt the user for inputs
