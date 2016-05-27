@@ -14,16 +14,13 @@ import flights.database._
 import flights.geo._
 import flights.rawdata.RawDataset._
 
-
 /**
  * Link between two airports and its operating airlines
  */
-case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) extends Ordered[AirportLink] {
+case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) {
   def distance(): Float = {
     Geo.distance(sourceAirport.lat, sourceAirport.lng, destAirport.lat, destAirport.lng)
   }
-
-  def compare(that: AirportLink): Int = distance().compareTo(that.distance())
 
   def prettyPrint(prefix: String) {
     val airlines_ = airlines.mkString(",")

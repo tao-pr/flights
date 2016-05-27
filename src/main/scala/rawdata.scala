@@ -32,7 +32,9 @@ object RawDataset {
     def isInCountry(_cn: String) = country == _cn
   }
 
-  case class Route(airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int) {
+  case class Route(airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int) extends Ordered[AirportLink] {
+    
+    def compare(that: AirportLink): Int = distance().compareTo(that.distance())
     def prettyPrint(): Unit = {
       println(Console.CYAN + airlineCode + " ✈️ " +
         Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " +
