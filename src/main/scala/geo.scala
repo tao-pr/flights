@@ -1,4 +1,4 @@
-package flights.geo
+package flights
 
 object Geo {
   /**
