@@ -5,7 +5,6 @@ import slick.driver.H2Driver.api._
 import slick.lifted.Query
 import scala.Either
 import scala.collection.immutable.{ Iterable }
-import scala.language.postfixOps
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -117,7 +116,7 @@ object RouteMap {
       dests <- dstAirports
     } yield sources.flatMap { (src) =>
       dests.flatMap { (dst) =>
-        Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20 seconds)
+        Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20.seconds)
       }
     }
   }
@@ -132,7 +131,7 @@ object RouteMap {
         srcAirport.code,
         dstAirport.code
       )
-      Await.result(routes, 20 seconds)
+      Await.result(routes, 20.seconds)
     }
   }
 
@@ -142,10 +141,10 @@ object RouteMap {
   def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Seq[ConnectedRoutes] = {
 
     // Expand all airports residing in the source city
-    val srcAirports = Await.result(OpenFlightsDB.findAirports(citySrc), 20 seconds)
+    val srcAirports = Await.result(OpenFlightsDB.findAirports(citySrc), 20.seconds)
 
     // Expand all airports residing in destination city
-    val destAirports = Await.result(OpenFlightsDB.findAirports(cityDest), 20 seconds)
+    val destAirports = Await.result(OpenFlightsDB.findAirports(cityDest), 20.seconds)
 
     // Calculate a sample straight distance from the source to the destination
     val straightDistance = findDistance(srcAirports.head, destAirports.head)
@@ -190,7 +189,7 @@ object RouteMap {
       // Expand all routes which start at the specified airport
       val departures = Await.result(
         OpenFlightsDB.findDepartureRoutes(srcAirport.code),
-        30 seconds
+        30.seconds
       )
 
       // Group all departure routes by destination airport
@@ -223,7 +222,7 @@ object RouteMap {
     val airlines = routes.map(_.airlineCode).toList
     val destAirports = Await.result(
       OpenFlightsDB.findAirportByCode(destAirportCode),
-      30 seconds
+      30.seconds
     )
 
     destAirports.length match {
@@ -269,7 +268,7 @@ object RouteMap {
   def getDestCityOfRoute(route: Route): String = {
     val (source, dest) = Await.result(
       OpenFlightsDB.findCitiesConnectedByRoute(route),
-      30 seconds
+      30.seconds
     )
     dest
   }

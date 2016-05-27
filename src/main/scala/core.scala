@@ -5,7 +5,6 @@ package flights
  */
 object Core extends App {
   import scala.io.StdIn.{ readLine, readInt }
-  import scala.language.postfixOps
   import scala.concurrent.{ Future, Await }
   import scala.concurrent.duration._
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,7 +19,7 @@ object Core extends App {
   } yield (job1, job2, job3)
 
   // Make sure all data has been imported
-  Await.result(importJobs, 100 seconds)
+  Await.result(importJobs, 100.seconds)
 
   // Show the database summary
   println(Console.CYAN + "========================" + Console.RESET)
@@ -46,7 +45,7 @@ object Core extends App {
     // Find direct flights between two cities
     // val routesDirect = Await.result(
     //   RouteMap.findCityRoutes(citySource, cityDest),
-    //   100 seconds
+    //   100.seconds
     // )
     // routesDirect foreach { _.prettyPrint() }
 
