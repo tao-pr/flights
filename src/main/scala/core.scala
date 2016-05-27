@@ -4,10 +4,10 @@ package flights
  * Core module of Flights
  */
 object Core extends App {
-  import scala.io.StdIn.{ readLine, readInt }
-  import scala.concurrent.{ Future, Await }
+  import scala.concurrent.Await
   import scala.concurrent.duration._
   import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.io.StdIn.{ readLine, readInt }
 
   // Import airports, airlines and routes
   // from .dat data files to H2 database

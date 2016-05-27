@@ -1,13 +1,9 @@
 package flights
 
-// REVIEW: Following database dependencies should be disguised
-import slick.driver.H2Driver.api._
-import slick.lifted.Query
-import scala.Either
 import scala.collection.immutable.{ Iterable }
-import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ Future, Await }
 
 /**
  * Link between two airports and its operating airlines

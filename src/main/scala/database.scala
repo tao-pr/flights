@@ -1,9 +1,10 @@
 package flights
 
-import slick.driver.H2Driver.api._
-import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ Future, Await }
+
+import slick.driver.H2Driver.api._
 
 /**
  * Airline table for Slick interface
