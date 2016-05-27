@@ -10,7 +10,6 @@ import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 /**
  * Link between two airports and its operating airlines
  */

@@ -6,7 +6,6 @@ import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 /**
  * Airline table for Slick interface
  */
