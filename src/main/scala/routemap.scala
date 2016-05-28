@@ -150,7 +150,6 @@ object RouteMap {
       val routes = findIndirectRoutesFromAirport(
         srcAirport,
         cityDest,
-        Set(),
         maxConnection,
         straightDistance
       )
@@ -177,7 +176,7 @@ object RouteMap {
    * @param {Int} Maximum number of connections
    * @param {Float} Straight distance from the source city to the destination city (in metre)
    */
-  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, skipCities: Set[String], maxConnection: Int, straightDistance: Float): Iterable[ConnectedRoutes] = {
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int, straightDistance: Float, skipCities: Set[String] = Set.empty[String]): Iterable[ConnectedRoutes] = {
 
     if (maxConnection <= 0)
       List()
@@ -246,9 +245,9 @@ object RouteMap {
           val nextRoutes = findIndirectRoutesFromAirport(
             destAirport,
             cityFinalDest,
-            skipCities_,
             maxConnection - 1,
-            straightDistance
+            straightDistance,
+            skipCities_
           )
 
           // Assembly all the expanded links
