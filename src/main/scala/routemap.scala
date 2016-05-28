@@ -1,6 +1,5 @@
 package flights
 
-import scala.collection.immutable.{ Iterable }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ Future, Await }
@@ -97,64 +96,73 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
 object RouteMap {
 
   /**
-   * Find all routes between two cities
+   * Find all direct routes between two cities
    */
   def findCityRoutes(citySrc: String, cityDest: String): Future[Seq[Route]] = {
-
-    // Execute queries and reap the collection of results
     val srcAirports = OpenFlightsDB.findAirports(citySrc)
     val dstAirports = OpenFlightsDB.findAirports(cityDest)
 
+    // Flatmap the parallel queries to one future pair of results
+    val airports = for { sources <- srcAirports; dests <- dstAirports } yield (sources, dests)
+
     // Expand all routes which connect from
     // the source airport to any of the destination airports
-    for {
-      sources <- srcAirports
-      dests <- dstAirports
-    } yield sources.flatMap { (src) =>
-      dests.flatMap { (dst) =>
-        Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20.seconds)
-      }
+    // OPTIMIZE: ought to be possible to reduce to one query, `WHERE src IN (...) AND dst IN (...)`
+
+    // format: OFF - ugh: https://github.com/scala-ide/scalariform/issues/29
+    airports flatMap { case (sources, dests) =>
+      val routes = for {
+        src <- sources
+        dst <- dests
+      } yield OpenFlightsDB.findAirportRoutes(src.code, dst.code)
+
+      Future.reduce(routes)(_ ++ _)
     }
+    // format: ON
   }
 
   /**
    * Find all routes which connect from the specified airport
    * and end at any of the given list of the destination airports
    */
-  def findAirportRoutes(srcAirport: Airport, dstAirports: Seq[Airport]) = Future[Seq[Route]] {
-    dstAirports flatMap { (dstAirport) =>
-      val routes = OpenFlightsDB.findAirportRoutes(
-        srcAirport.code,
-        dstAirport.code
-      )
-      Await.result(routes, 20.seconds)
+  def findAirportRoutes(srcAirport: Airport, dstAirports: Seq[Airport]): Future[Seq[Route]] = {
+    // OPTIMIZE: we could produce a `WHERE dst IN (...)` query instead of N queries.
+    val routes = dstAirports map { dstAirport =>
+      OpenFlightsDB.findAirportRoutes(srcAirport.code, dstAirport.code)
     }
+    Future.reduce(routes)(_ ++ _)
   }
 
   /**
    * Find all chained routes which connect two cities
    */
-  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Seq[ConnectedRoutes] = {
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
 
     // Expand all airports residing in the source city
-    val srcAirports = Await.result(OpenFlightsDB.findAirports(citySrc), 20.seconds)
+    val srcAirports = OpenFlightsDB.findAirports(citySrc)
 
     // Expand all airports residing in destination city
-    val destAirports = Await.result(OpenFlightsDB.findAirports(cityDest), 20.seconds)
+    val destAirports = OpenFlightsDB.findAirports(cityDest)
 
-    // Calculate a sample straight distance from the source to the destination
-    val straightDistance = findDistance(srcAirports.head, destAirports.head)
+    // Flatmap the parallel queries to one future pair of results
+    val airports = for { sources <- srcAirports; dests <- destAirports } yield (sources, dests)
 
     // Expand all connected routes recursively
-    srcAirports flatMap ((srcAirport) => {
-      val routes = findIndirectRoutesFromAirport(
-        srcAirport,
-        cityDest,
-        maxConnection,
-        straightDistance
-      )
-      routes
-    })
+    // format: OFF - ugh: https://github.com/scala-ide/scalariform/issues/29
+    airports map { case (sources, dests) =>
+      // Calculate a sample straight distance from the source to the destination
+      val straightDistance = findDistance(sources.head, dests.head) // TODO: should use headOption
+
+      sources flatMap { srcAirport =>
+        findIndirectRoutesFromAirport(
+          srcAirport,
+          cityDest,
+          maxConnection,
+          straightDistance
+        )
+      }
+    }
+    // format: ON
   }
 
   /**
@@ -258,14 +266,10 @@ object RouteMap {
   }
 
   /**
-   * Find the city where the given route arrives at
+   * Find the city where the given route arrives
    */
-  def getDestCityOfRoute(route: Route): String = {
-    val (source, dest) = Await.result(
-      OpenFlightsDB.findCitiesConnectedByRoute(route),
-      30.seconds
-    )
-    dest
+  def getDestCityOfRoute(route: Route): Future[String] = {
+    val cities = OpenFlightsDB.findCitiesConnectedByRoute(route)
+    cities map { case (_, dest) => dest }
   }
-
 }
