@@ -9,9 +9,8 @@ import scala.concurrent.Future
  * Link between two airports and its operating airlines
  */
 case class AirportLink(sourceAirport: Airport, destAirport: Airport, airlines: List[String]) {
-  def distance(): Float = {
+  val distance: Float =
     Geo.distance(sourceAirport.lat, sourceAirport.lng, destAirport.lat, destAirport.lng)
-  }
 
   def prettyPrint(prefix: String) {
     val airlines_ = airlines.mkString(",")
@@ -43,35 +42,23 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
   }
 
   /**
-   * Compute the aggregated travelling distance
-   * of the entire connected routes
+   * The aggregate travelling distance of all the connected routes, in meters.
    */
-  def totalDistance(): Float = routes match {
-    case Seq() => 0
-    case _ => {
-      val rh = routes.head
-      val r_ = routes.tail
-      rh.distance() + ConnectedRoutes(r_).totalDistance()
-    }
-  }
+  def totalDistance: Float =
+    if (routes.isEmpty) 0F
+    else routes.foldLeft(0F) { (total, route) => total + route.distance }
 
   /**
-   * Compute the distance from the beginning airport
-   * to the final airport of the connected routes
+   * The direct geographical distance from the origin airport to the final
+   * airport of the connected routes, in meters.
    */
-  def displacement() = routes.length >= 2 match {
-    case true => {
-      val a0 = routes.head
-      val a1 = routes.last
-      Geo.distance(
-        a0.sourceAirport.lat,
-        a0.sourceAirport.lng,
-        a1.destAirport.lat,
-        a1.destAirport.lng
-      )
+  def displacement: Float =
+    if (routes.length < 2) 0 // TODO: Isn't length == 1 possible for a direct flight?
+    else {
+      val origin = routes.head.sourceAirport
+      val destination = routes.last.destAirport
+      Geo.distance(origin.lat, origin.lng, destination.lat, destination.lng)
     }
-    case false => 0
-  }
 
   def prettyPrint() {
     if (routes.length > 0) {
