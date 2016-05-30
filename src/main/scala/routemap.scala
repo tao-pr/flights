@@ -99,11 +99,7 @@ object RouteMap {
    * Find all direct routes between two cities
    */
   def findCityRoutes(citySrc: String, cityDest: String): Future[Seq[Route]] = {
-    val srcAirports = OpenFlightsDB.findAirports(citySrc)
-    val dstAirports = OpenFlightsDB.findAirports(cityDest)
-
-    // Flatmap the parallel queries to one future pair of results
-    val airports = for { sources <- srcAirports; dests <- dstAirports } yield (sources, dests)
+    val airports = findSourceAndDestinationAirports(citySrc, cityDest)
 
     // Expand all routes which connect from
     // the source airport to any of the destination airports
@@ -137,15 +133,7 @@ object RouteMap {
    * Find all chained routes which connect two cities
    */
   def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
-
-    // Expand all airports residing in the source city
-    val srcAirports = OpenFlightsDB.findAirports(citySrc)
-
-    // Expand all airports residing in destination city
-    val destAirports = OpenFlightsDB.findAirports(cityDest)
-
-    // Flatmap the parallel queries to one future pair of results
-    val airports = for { sources <- srcAirports; dests <- destAirports } yield (sources, dests)
+    val airports = findSourceAndDestinationAirports(citySrc, cityDest)
 
     // Expand all connected routes recursively
     // format: OFF - ugh: https://github.com/scala-ide/scalariform/issues/29
@@ -211,6 +199,9 @@ object RouteMap {
         }
     }
   }
+
+  private def findSourceAndDestinationAirports(srcCity: String, dstCity: String): Future[(Seq[Airport], Seq[Airport])] =
+    OpenFlightsDB.findAirports(srcCity) zip OpenFlightsDB.findAirports(dstCity)
 
   /**
    * Expand further routes beginning from the specified airport
