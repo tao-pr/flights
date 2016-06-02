@@ -11,7 +11,6 @@ import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.math.Ordered.orderingToOrdered
-import scala.math._
 
 /**
  * A spanning tree consists of nodes and edges which:
@@ -95,6 +94,10 @@ object FindCityLink {
     CityLink(citySrc, cityDest, airports, routes, shortestDist);
   }
 
+  /**
+   * Compute the shortest distance among the sequence of routes.
+   * The list of associated airports are required as supplementary info.
+   */
   private def shortestDistance(routes: Future[Seq[Route]], airports: Map[String, Airport]): Float = {
     val allRoutes = Await.result(routes, 10 seconds)
     val sortedRoutes = allRoutes.sortWith((left, right) => {
@@ -107,6 +110,10 @@ object FindCityLink {
     )
   }
 
+  /**
+   * Compute a distance of a route.
+   * The list of associated airports are required as supplementary info.
+   */
   private def routeDistance(route: Route, airports: Map[String, Airport]): Float = {
     val srcAirport = airports get route.airportSourceCode
     val dstAirport = airports get route.airportDestCode
@@ -135,9 +142,11 @@ object TreeSpanner {
     // Find all possible city links which connect
     // the given set of cities altogether.
     var q = PriorityQueue.empty[CityLink](implicitly[Ordering[CityLink]])
-    val allLinks = cities.map { (src) =>
-      cities.filter(_ != src).map { (dst) =>
-        FindCityLink(src, dst)
+    cities.foreach { (src) =>
+      cities.filter(_ != src).foreach { (dst) =>
+        // Add a city link to the priority queue
+        // which sorts its elements by shortest distance.
+        q.enqueue(FindCityLink(src, dst))
       }
     }
 

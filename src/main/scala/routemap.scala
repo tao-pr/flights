@@ -1,15 +1,9 @@
 package flights
 
-// REVIEW: Following database dependencies should be disguised
-import slick.driver.H2Driver.api._
-import slick.lifted.Query
-import scala.Either
-import scala.collection.immutable.{ Iterable }
-import scala.language.postfixOps
-import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.math.Ordered.orderingToOrdered
+import scala.concurrent.Future
 
 /**
  * Link between two airports and its operating airlines
@@ -103,65 +97,63 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
 object RouteMap {
 
   /**
-   * Find all routes between two cities
+   * Find all direct routes between two cities
    */
   def findCityRoutes(citySrc: String, cityDest: String): Future[Seq[Route]] = {
-
-    // Execute queries and reap the collection of results
-    val srcAirports = OpenFlightsDB.findAirports(citySrc)
-    val dstAirports = OpenFlightsDB.findAirports(cityDest)
+    val airports = findSourceAndDestinationAirports(citySrc, cityDest)
 
     // Expand all routes which connect from
     // the source airport to any of the destination airports
-    for {
-      sources <- srcAirports
-      dests <- dstAirports
-    } yield sources.flatMap { (src) =>
-      dests.flatMap { (dst) =>
-        Await.result(OpenFlightsDB.findAirportRoutes(src.code, dst.code), 20 seconds)
-      }
+    // OPTIMIZE: ought to be possible to reduce to one query, `WHERE src IN (...) AND dst IN (...)`
+
+    // format: OFF - ugh: https://github.com/scala-ide/scalariform/issues/29
+    airports flatMap { case (sources, dests) =>
+      val routes = for {
+        src <- sources
+        dst <- dests
+      } yield OpenFlightsDB.findAirportRoutes(src.code, dst.code)
+
+      Future.reduce(routes)(_ ++ _)
     }
+    // format: ON
   }
 
   /**
    * Find all routes which connect from the specified airport
    * and end at any of the given list of the destination airports
    */
-  def findAirportRoutes(srcAirport: Airport, dstAirports: Seq[Airport]) = Future[Seq[Route]] {
-    dstAirports flatMap { (dstAirport) =>
-      val routes = OpenFlightsDB.findAirportRoutes(
-        srcAirport.code,
-        dstAirport.code
-      )
-      Await.result(routes, 20 seconds)
+  def findAirportRoutes(srcAirport: Airport, dstAirports: Seq[Airport]): Future[Seq[Route]] = {
+    // OPTIMIZE: we could produce a `WHERE dst IN (...)` query instead of N queries.
+    val routes = dstAirports map { dstAirport =>
+      OpenFlightsDB.findAirportRoutes(srcAirport.code, dstAirport.code)
     }
+    Future.reduce(routes)(_ ++ _)
   }
 
   /**
    * Find all chained routes which connect two cities
    */
-  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Seq[ConnectedRoutes] = {
-
-    // Expand all airports residing in the source city
-    val srcAirports = Await.result(OpenFlightsDB.findAirports(citySrc), 20 seconds)
-
-    // Expand all airports residing in destination city
-    val destAirports = Await.result(OpenFlightsDB.findAirports(cityDest), 20 seconds)
-
-    // Calculate a sample straight distance from the source to the destination
-    val straightDistance = findDistance(srcAirports.head, destAirports.head)
+  def findCityIndirectRoutes(citySrc: String, cityDest: String, maxConnection: Int): Future[Seq[ConnectedRoutes]] = {
+    val airports = findSourceAndDestinationAirports(citySrc, cityDest)
 
     // Expand all connected routes recursively
-    srcAirports flatMap ((srcAirport) => {
-      val routes = findIndirectRoutesFromAirport(
-        srcAirport,
-        cityDest,
-        Set(),
-        maxConnection,
-        straightDistance
-      )
-      routes
-    })
+    // format: OFF - ugh: https://github.com/scala-ide/scalariform/issues/29
+    airports flatMap { case (sources, dests) =>
+      // Calculate a sample straight distance from the source to the destination
+      val straightDistance = findDistance(sources.head, dests.head) // TODO: should use headOption
+
+      val routes = sources map { srcAirport =>
+        findIndirectRoutesFromAirport(
+          srcAirport,
+          cityDest,
+          maxConnection,
+          straightDistance
+        )
+      }
+
+      Future.reduce(routes)(_ ++ _)
+    }
+    // format: ON
   }
 
   /**
@@ -183,22 +175,21 @@ object RouteMap {
    * @param {Int} Maximum number of connections
    * @param {Float} Straight distance from the source city to the destination city (in metre)
    */
-  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, skipCities: Set[String], maxConnection: Int, straightDistance: Float): Iterable[ConnectedRoutes] = {
+  def findIndirectRoutesFromAirport(srcAirport: Airport, cityFinalDest: String, maxConnection: Int, straightDistance: Float, skipCities: Set[String] = Set.empty[String]): Future[Seq[ConnectedRoutes]] = {
 
     if (maxConnection <= 0)
-      List()
+      Future.successful(Nil)
     else {
       // Expand all routes which start at the specified airport
-      val departures = Await.result(
-        OpenFlightsDB.findDepartureRoutes(srcAirport.code),
-        30 seconds
-      )
+      val departures = OpenFlightsDB.findDepartureRoutes(srcAirport.code)
 
-      // Group all departure routes by destination airport
-      departures
-        .groupBy(_.airportDestCode)
-        .flatMap {
-          case (destAirportCode, routes) => expandRoutes(
+      departures flatMap { departures =>
+        // Group all departure routes by destination airport
+        val byDestination = departures.groupBy(_.airportDestCode)
+
+        // format: OFF - ugh: https://github.com/scala-ide/scalariform/issues/29
+        val routes = byDestination map { case (destAirportCode, routes) =>
+          expandRoutes(
             srcAirport,
             destAirportCode,
             cityFinalDest,
@@ -208,13 +199,20 @@ object RouteMap {
             straightDistance
           )
         }
+        // format: ON
+
+        Future.reduce(routes)(_ ++ _)
+      }
     }
   }
+
+  private def findSourceAndDestinationAirports(srcCity: String, dstCity: String): Future[(Seq[Airport], Seq[Airport])] =
+    OpenFlightsDB.findAirports(srcCity) zip OpenFlightsDB.findAirports(dstCity)
 
   /**
    * Expand further routes beginning from the specified airport
    */
-  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCities: Set[String], routes: Seq[Route], maxConnection: Int, straightDistance: Float): Iterable[ConnectedRoutes] = {
+  private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCities: Set[String], routes: Seq[Route], maxConnection: Int, straightDistance: Float): Future[Seq[ConnectedRoutes]] = {
     // TAOTODO: Ignore if the route will be extended 
     // even farther to the final city 
     // if we choose this route
@@ -222,57 +220,49 @@ object RouteMap {
     // Treat this as a single common route
     // operated by multiple airlines
     val airlines = routes.map(_.airlineCode).toList
-    val destAirports = Await.result(
-      OpenFlightsDB.findAirportByCode(destAirportCode),
-      30 seconds
-    )
+    val destAirports = OpenFlightsDB.findAirportByCode(destAirportCode)
 
-    destAirports.length match {
-      case 0 => List() // Unable to locate the destination airport, skip it
-      case _ => {
+    destAirports flatMap { destAirports =>
+      if (destAirports.isEmpty) Future.successful(Nil) // Unable to locate the destination airport, skip it
+      else {
         val destAirport = destAirports.head
         val link = AirportLink(srcAirport, destAirport, airlines)
 
         // The expansion ends if all these routes 
         // end up at the final destination city
-        if (destAirport.city == cityFinalDest) {
-          List(ConnectedRoutes(Seq(link)))
-        } // Skip the city we don't want to land at
-        else if (skipCities contains destAirport.city) {
-          List()
-        } // Skip if the distance of the link exceeds total straight distance
-        // (Some margin is added for relaxation)
-        else if (link.distance * 1.1 > straightDistance) {
-          List()
-        } else {
-          // Add the current terminal cities to the exclude list
-          val skipCities_ = skipCities + srcAirport.city
+        if (destAirport.city == cityFinalDest) Future.successful(List(ConnectedRoutes(Seq(link))))
 
+        // Skip the city we don't want to land at
+        else if (skipCities contains destAirport.city) Future.successful(Nil)
+
+        // Skip if the distance of the link exceeds total straight distance
+        // (Some margin is added for relaxation)
+        else if (link.distance * 1.1 > straightDistance) Future.successful(Nil)
+
+        else {
           // Expand further routes from the current landed airport
           val nextRoutes = findIndirectRoutesFromAirport(
             destAirport,
             cityFinalDest,
-            skipCities_,
             maxConnection - 1,
-            straightDistance
+            straightDistance,
+            skipCities + srcAirport.city
           )
 
-          // Assembly all the expanded links
-          nextRoutes.map(r => r.prependLink(link))
+          // Assemble all the expanded links
+          nextRoutes map { routes =>
+            routes.map(_.prependLink(link))
+          }
         }
       }
     }
   }
 
   /**
-   * Find the city where the given route arrives at
+   * Find the city where the given route arrives
    */
-  def getDestCityOfRoute(route: Route): String = {
-    val (source, dest) = Await.result(
-      OpenFlightsDB.findCitiesConnectedByRoute(route),
-      30 seconds
-    )
-    dest
+  def getDestCityOfRoute(route: Route): Future[String] = {
+    val cities = OpenFlightsDB.findCitiesConnectedByRoute(route)
+    cities map { case (_, dest) => dest }
   }
-
 }
