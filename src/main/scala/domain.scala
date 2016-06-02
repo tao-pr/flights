@@ -1,5 +1,7 @@
 package flights
 
+import scala.math.Ordered.orderingToOrdered
+
 /*
  * Primary domain model types.
  */
@@ -19,6 +21,9 @@ case class Airport(code: String, name: String, city: String, country: String, la
   def isValidAirport: Boolean = code.length > 0
   def isIn(city: String): Boolean = city == this.city
   def isInCountry(country: String): Boolean = country == this.country
+  def distanceTo(that: Airport): Float = {
+    Geo.distance(lat, lng, that.lat, that.lng)
+  }
 }
 
 case class Route(airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int) {

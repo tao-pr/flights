@@ -8,40 +8,6 @@ object RawDataset {
   import kantan.csv._
   import kantan.csv.ops.CsvInputOps
 
-  /**
-   * Representative classes of the CSV rows
-   */
-  case class Airline(id: Long, code: String, name: String, country: String) {
-    def prettyPrint(): Unit = {
-      println("✈️ " + Console.CYAN + name + " (" + code + ") " + Console.WHITE + country + Console.RESET)
-    }
-  }
-
-  case class Airport(code: String, name: String, city: String, country: String, lat: Float, lng: Float) {
-    def prettyPrint(): Unit = {
-      println("🏠 " + Console.CYAN + name + " (" + code + ") " +
-        Console.WHITE + city + "/" + country + Console.RESET)
-    }
-
-    def isValidAirport() = code.length > 0
-    def isIn(_city: String) = city == _city
-    def isInCountry(_cn: String) = country == _cn
-  }
-
-  case class Route(airlineCode: String, airportSourceCode: String, airportDestCode: String, numStops: Int) extends Ordered[AirportLink] {
-    
-    def compare(that: AirportLink): Int = distance().compareTo(that.distance())
-    def prettyPrint(): Unit = {
-      println(Console.CYAN + airlineCode + " ✈️ " +
-        Console.GREEN + airportSourceCode + " ➡️ " + airportDestCode + " " +
-        Console.WHITE + numStops.toString + " stops" + Console.RESET)
-    }
-
-    def startsAt(_airportCode: String) = airportSourceCode == _airportCode
-    def endsAt(_airportCode: String) = airportDestCode == _airportCode
-    def isOperatedBy(_airline: String) = airlineCode == _airline
-  }
-
   // Decoders that tell kantan.csv how to construct our case classes from the raw data
   private implicit val airportDecoder: RowDecoder[Airport] = RowDecoder.decoder6(Airport.apply)(4, 1, 2, 3, 6, 7)
   private implicit val airlineDecoder: RowDecoder[Airline] = RowDecoder.decoder4(Airline.apply)(0, 4, 1, 6)
