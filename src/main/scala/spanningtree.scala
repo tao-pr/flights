@@ -27,9 +27,36 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
    */
   def isLooped(): Boolean = {
 
-    // TAOTODO:
+    cities.exists { (c) => isLoopableFrom(c, List[String]()) }
+  }
 
-    false
+  /**
+   * Check whether traversing from the specified city
+   * may loop back to itself without repeating the same route.
+   * @param {String} City to start traversal
+   * @param {List[String]} List of cities we've passed by
+   */
+  private def isLoopableFrom(city: String, prevs: List[String]): Boolean = {
+    val departures = links
+      .filter((l) => cityOfAirport(l.airportSourceCode) == city)
+      .map(_.airportDestCode)
+
+    if (prevs.length > 2) {
+      val origin = prevs.last
+      val prev = prevs.head
+      // Ignore returning legs
+      val candidates = departures
+        .filter((d) => cityOfAirport(d) != prev)
+
+      // If there exists a link which loops back to the origin city,
+      // it is considered a loop.
+      (candidates.exists((c) => cityOfAirport(c) == origin)) ||
+        // Otherwise, examine further links
+        candidates.exists { (c) => isLoopableFrom(c, city +: prevs) }
+    } else {
+      // Too short traversal path to examine, go further
+      cities.exists { (c) => isLoopableFrom(c, city +: prevs) }
+    }
   }
 
   /**
@@ -80,8 +107,8 @@ object FindCityLink {
   def apply(citySrc: String, cityDest: String): CityLink = {
     // Find all routes which connect both cities
     val routes = RouteMap.findCityRoutes(citySrc, cityDest)
-    val airportsSrc = Await.result(OpenFlightsDB.findAirports(citySrc), 20 seconds)
-    val airportsDst = Await.result(OpenFlightsDB.findAirports(cityDest), 20 seconds)
+    val airportsSrc = Await.result(OpenFlightsDB.findAirports(citySrc), 20.seconds)
+    val airportsDst = Await.result(OpenFlightsDB.findAirports(cityDest), 20.seconds)
 
     // Combine all airports altogether as a hash map
     var airports = Map.empty[String, Airport]
@@ -99,7 +126,7 @@ object FindCityLink {
    * The list of associated airports are required as supplementary info.
    */
   private def shortestDistance(routes: Future[Seq[Route]], airports: Map[String, Airport]): Float = {
-    val allRoutes = Await.result(routes, 10 seconds)
+    val allRoutes = Await.result(routes, 10.seconds)
     val sortedRoutes = allRoutes.sortWith((left, right) => {
       routeDistance(left, airports) < routeDistance(right, airports)
     })
@@ -136,7 +163,7 @@ object TreeSpanner {
 
     // Find all airports residing in the given set of cities
     val airports = cities.flatMap {
-      (city) => Await.result(OpenFlightsDB.findAirports(city), 20 seconds)
+      (city) => Await.result(OpenFlightsDB.findAirports(city), 20.seconds)
     }
 
     // Find all possible city links which connect
