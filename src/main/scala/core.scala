@@ -67,8 +67,22 @@ object Core extends App {
 
   def findSpanningRoutes() {
     // TAOTODO:
+    println("Let's find spanning routes")
+    while (true) {
+      // Prompt the user for 3~5 cities
+      println(Console.CYAN + "Enter 3~5 city names, separated by commas" + Console.RESET)
+      val input = readLine(Console.CYAN + ":" + Console.RESET)
+      val cities = input.split(",").map(_.trim).toList
+
+      // Generate a spanning tree
+      val tree = TreeSpanner.minSpanningTree(cities)
+      tree.prettyPrint()
+
+      println(Console.GREEN + "Try again, or Ctrl + C to quit" + Console.RESET)
+    }
   }
 
   prepareDatabase()
-  findBestRoutes()
+  ///findBestRoutes()
+  findSpanningRoutes()
 }

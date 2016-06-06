@@ -90,6 +90,16 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
     SpanningTree(cities, airports, links.::(route))
   }
 
+  def prettyPrint() {
+    println(
+      Console.GREEN + "[Spanning Tree] : " +
+        Console.CYAN + cities.mkString(" - ") +
+        Console.RESET
+    )
+    println()
+    links foreach (_.prettyPrint)
+  }
+
 }
 
 /**
@@ -132,15 +142,18 @@ object FindCityLink {
    * The list of associated airports are required as supplementary info.
    */
   private def shortestDistance(routes: Future[Seq[Route]], airports: Map[String, Airport]): Float = {
+
     val allRoutes = Await.result(routes, 10.seconds)
     val sortedRoutes = allRoutes.sortWith((left, right) => {
       routeDistance(left, airports) < routeDistance(right, airports)
     })
 
-    routeDistance(
-      sortedRoutes.head,
-      airports
-    )
+    if (sortedRoutes.length > 0)
+      routeDistance(
+        sortedRoutes.head,
+        airports
+      )
+    else 0
   }
 
   /**
@@ -172,6 +185,11 @@ object TreeSpanner {
       (city) => Await.result(OpenFlightsDB.findAirports(city), 20.seconds)
     }
 
+    // TAODEBUG:
+    println(Console.GREEN + "Generating spanning tree of: " + Console.RESET)
+    cities foreach println
+    println(Console.GREEN + s"${airports.length} associated airports" + Console.RESET)
+
     // Find all possible city links which connect
     // the given set of cities altogether.
     var q = PriorityQueue.empty[CityLink](implicitly[Ordering[CityLink]])
@@ -198,7 +216,7 @@ object TreeSpanner {
       val next = q.dequeue()
 
       // TAODEBUG:
-      println("[NEXT] " + Console.CYAN + next.citySrc + " > " + next.cityDest + Console.RESET)
+      print("[NEXT] " + Console.CYAN + next.citySrc + " > " + next.cityDest + Console.RESET)
 
       // List routes which are subset of the given CityLink
       val routes = Await.result(next.routes, 20.seconds)
@@ -207,14 +225,22 @@ object TreeSpanner {
         t.addRoute(r)
       }
 
-      if (tree_.isLooped())
+      if (tree_.isLooped()) {
+        // TAODEBUG:
+        println(Console.RED + " [looped]" + Console.RESET)
+
         growSpanningTree(tree, q, cities)
-      else {
+      } else {
         // Check if the resultant tree is maximum?
         if (tree_.orphanCities().size == cities.length) {
           // Finished! All cities have connections attached
+          // TAODEBUG:
+          println(Console.GREEN + " [All connected!]" + Console.RESET)
           tree_
-        } else growSpanningTree(tree_, q, cities)
+        } else {
+          println(" [...]")
+          growSpanningTree(tree_, q, cities)
+        }
       }
     }
   }
