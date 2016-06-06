@@ -185,10 +185,10 @@ object TreeSpanner {
 
     // Perform Kruskal's algorithm
     val tree = SpanningTree(cities.toSet, airports, List[Route]())
-    growSpanningTree(tree, q)
+    growSpanningTree(tree, q, cities)
   }
 
-  private def growSpanningTree(tree: SpanningTree, q: PriorityQueue[CityLink]): SpanningTree = {
+  private def growSpanningTree(tree: SpanningTree, q: PriorityQueue[CityLink], cities: List[String]): SpanningTree = {
     if (q.length == 0)
       tree
     else {
@@ -196,6 +196,9 @@ object TreeSpanner {
       // If it produces a loop, skip it.
       // Do this repeatedly, all the way until all cities are connected.
       val next = q.dequeue()
+
+      // TAODEBUG:
+      println("[NEXT] " + Console.CYAN + next.citySrc + " > " + next.cityDest + Console.RESET)
 
       // List routes which are subset of the given CityLink
       val routes = Await.result(next.routes, 20.seconds)
@@ -205,10 +208,14 @@ object TreeSpanner {
       }
 
       if (tree_.isLooped())
-        growSpanningTree(tree, q)
-      else
-        // TAOTODO: Check if the resultant tree is maximum?
-        growSpanningTree(tree_, q)
+        growSpanningTree(tree, q, cities)
+      else {
+        // Check if the resultant tree is maximum?
+        if (tree_.orphanCities().size == cities.length) {
+          // Finished! All cities have connections attached
+          tree_
+        } else growSpanningTree(tree_, q, cities)
+      }
     }
   }
 }
