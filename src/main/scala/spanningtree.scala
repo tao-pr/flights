@@ -31,6 +31,16 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
   }
 
   /**
+   * Check whether an opposite direction of the given link
+   * already exists in the spanning tree
+   */
+  def isReverseLinkExist(link: CityLink): Boolean = {
+    links
+      .filter((l) => l.cityDest == link.citySrc && l.citySrc == link.cityDest)
+      .length > 0
+  }
+
+  /**
    * Check whether traversing from the specified city
    * may loop back to itself without repeating the same route.
    * @param {String} City to start traversal
@@ -224,19 +234,24 @@ object TreeSpanner {
       // If it produces a loop, skip it.
       // Do this repeatedly, all the way until all cities are connected.
       val next = q.dequeue()
-      val tree_ = tree.addLink(next)
-
-      // format: OFF -- The cascaded IF statement is tangled by the formatter.
-      if (tree_.isLooped()) {
+      if (tree.isReverseLinkExist(next))
+        // If the reverse direction of the link exists,
+        // skip this.
         growSpanningTree(tree, q, cities)
-      } 
       else {
-        // Check if the resultant tree is maximally spanned?
-        if (tree_.orphanCities().size == 0)
-          // Finished! All cities have connections attached
-          tree_
-        else
-          growSpanningTree(tree_, q, cities)
+        val tree_ = tree.addLink(next)
+        // format: OFF -- The cascaded IF statement is tangled by the formatter.
+        if (tree_.isLooped()) {
+          growSpanningTree(tree, q, cities)
+        } 
+        else {
+          // Check if the resultant tree is maximally spanned?
+          if (tree_.orphanCities().size == 0)
+            // Finished! All cities have connections attached
+            tree_
+          else
+            growSpanningTree(tree_, q, cities)
+        }
       }
     }
     // format: ON
