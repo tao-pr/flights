@@ -20,7 +20,7 @@ import scala.math.Ordered.orderingToOrdered
  * is employed as nodes but will be referenced as cities.
  * This means one city node may be represented by one or more Airports.
  */
-case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List[Route]) {
+case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List[CityLink]) {
 
   /**
    * Check whether the tree has a loop.
@@ -37,22 +37,21 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
    * @param {List[String]} List of cities we've passed by
    */
   private def isLoopableFrom(city: String, prevs: List[String]): Boolean = {
+    // Ignore self-loop
     val departures = links
-      .filter((l) => cityOfAirport(l.airportSourceCode) == city)
-      .map(_.airportDestCode)
+      .filter(_.cityDest == city)
 
     if (prevs.length > 2) {
       val origin = prevs.last
       val prev = prevs.head
       // Ignore returning legs
-      val candidates = departures
-        .filter((d) => cityOfAirport(d) != prev)
+      val candidates = departures.filter(_.cityDest != prev)
 
       // If there exists a link which loops back to the origin city,
       // it is considered a loop.
-      (candidates.exists((c) => cityOfAirport(c) == origin)) ||
+      (candidates.exists(_.cityDest == origin)) ||
         // Otherwise, examine further links
-        candidates.exists { (c) => isLoopableFrom(c, prevs.::(city)) }
+        candidates.exists { (c) => isLoopableFrom(c.cityDest, prevs.::(city)) }
     } else {
       // Too short traversal path to examine, go further
       cities.exists { (c) => isLoopableFrom(c, prevs.::(city)) }
@@ -65,11 +64,9 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
    */
   def orphanCities(): Set[String] = {
     links.foldLeft(cities) { (orphans, lnk) =>
-      var sourceCity = cityOfAirport(lnk.airportSourceCode)
-      var destCity = cityOfAirport(lnk.airportDestCode)
       // Remove the two terminal cities from the list of orphans.
       // Iterate until all routes are tested.
-      orphans -- Set(sourceCity, destCity)
+      orphans -- Set(lnk.citySrc, lnk.cityDest)
     }
   }
 
@@ -84,10 +81,10 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
   }
 
   /**
-   * Add a new route to the spanning tree
+   * Add a new city link to the spanning tree
    */
-  def addRoute(route: Route): SpanningTree = {
-    SpanningTree(cities, airports, links.::(route))
+  def addLink(link: CityLink): SpanningTree = {
+    SpanningTree(cities, airports, links.::(link))
   }
 
   def prettyPrint() {
@@ -109,6 +106,12 @@ case class CityLink(citySrc: String, cityDest: String, airports: Map[String, Air
 
   def compare(that: CityLink): Int = {
     distance.compareTo(that.distance)
+  }
+
+  def prettyPrint() {
+    println("   " + Console.YELLOW + citySrc + " ▶ " + cityDest +
+      Console.CYAN + s" : ${distance / 1000} km" +
+      Console.RESET)
   }
 }
 
@@ -202,7 +205,7 @@ object TreeSpanner {
     }
 
     // Perform Kruskal's algorithm
-    val tree = SpanningTree(cities.toSet, airports, List[Route]())
+    val tree = SpanningTree(cities.toSet, airports, List[CityLink]())
     growSpanningTree(tree, q, cities)
   }
 
@@ -218,13 +221,7 @@ object TreeSpanner {
       // TAODEBUG:
       print("[NEXT] " + Console.CYAN + next.citySrc + " > " + next.cityDest + Console.RESET)
 
-      // List routes which are subset of the given CityLink
-      val routes = Await.result(next.routes, 20.seconds)
-
-      val tree_ = routes.foldLeft(tree) { (t, r) =>
-        t.addRoute(r)
-      }
-
+      val tree_ = tree.addLink(next)
       if (tree_.isLooped()) {
         // TAODEBUG:
         println(Console.RED + " [looped]" + Console.RESET)
