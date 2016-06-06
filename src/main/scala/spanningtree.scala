@@ -47,6 +47,9 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
       // Ignore returning legs
       val candidates = departures.filter(_.cityDest != prev)
 
+      // TAODEBUG:
+      println(s"   Origin: ${origin} | Prev: ${prev} | Current: ${city}")
+
       // If there exists a link which loops back to the origin city,
       // it is considered a loop.
       (candidates.exists(_.cityDest == origin)) ||
@@ -105,13 +108,14 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
 case class CityLink(citySrc: String, cityDest: String, airports: Map[String, Airport], routes: Future[Seq[Route]], distance: Float) extends Ordered[CityLink] {
 
   def compare(that: CityLink): Int = {
-    distance.compareTo(that.distance)
+    -distance.compareTo(that.distance)
   }
 
   def prettyPrint() {
+    val numRoutes = Await.result(routes, 10.seconds).length
     println("   " + Console.YELLOW + citySrc + " ▶ " + cityDest +
-      Console.CYAN + s" : ${distance / 1000} km" +
-      Console.RESET)
+      Console.CYAN + s" : ${distance / 1000} km " +
+      Console.RESET + s"${numRoutes} routes")
   }
 }
 
@@ -200,9 +204,16 @@ object TreeSpanner {
       cities.filter(_ != src).foreach { (dst) =>
         // Add a city link to the priority queue
         // which sorts its elements by shortest distance.
-        q.enqueue(FindCityLink(src, dst))
+        val link = FindCityLink(src, dst)
+        val routeCount = (Await.result(link.routes, 10.seconds)).length
+        if (routeCount > 0)
+          q.enqueue(link)
       }
     }
+
+    // TAODEBUG:
+    println(Console.CYAN + "[Links:]" + Console.RESET)
+    q.foreach(_.prettyPrint)
 
     // Perform Kruskal's algorithm
     val tree = SpanningTree(cities.toSet, airports, List[CityLink]())
@@ -219,7 +230,8 @@ object TreeSpanner {
       val next = q.dequeue()
 
       // TAODEBUG:
-      print("[NEXT] " + Console.CYAN + next.citySrc + " > " + next.cityDest + Console.RESET)
+      print("[NEXT]")
+      next.prettyPrint()
 
       val tree_ = tree.addLink(next)
       if (tree_.isLooped()) {
