@@ -45,19 +45,24 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
       val origin = prevs.last
       val prev = prevs.head
       // Ignore returning legs
-      val candidates = departures.filter(_.cityDest != prev)
+      val candidates = departures.filter((d) =>
+        d.cityDest != prev && !prevs.contains(d.cityDest))
 
-      // TAODEBUG:
-      println(s"   Origin: ${origin} | Prev: ${prev} | Current: ${city}")
-
+      // No further path we can take, obviously no loop presents
+      if (candidates.length == 0)
+        false
       // If there exists a link which loops back to the origin city,
       // it is considered a loop.
-      (candidates.exists(_.cityDest == origin)) ||
-        // Otherwise, examine further links
+      else if (candidates.exists(_.cityDest == origin))
+        true
+      // Otherwise, examine further links
+      else
         candidates.exists { (c) => isLoopableFrom(c.cityDest, prevs.::(city)) }
     } else {
       // Too short traversal path to examine, go further
-      cities.exists { (c) => isLoopableFrom(c, prevs.::(city)) }
+      cities
+        .filter(_ != city)
+        .exists { (c) => isLoopableFrom(c, prevs.::(city)) }
     }
   }
 
@@ -211,10 +216,6 @@ object TreeSpanner {
       }
     }
 
-    // TAODEBUG:
-    println(Console.CYAN + "[Links:]" + Console.RESET)
-    q.foreach(_.prettyPrint)
-
     // Perform Kruskal's algorithm
     val tree = SpanningTree(cities.toSet, airports, List[CityLink]())
     growSpanningTree(tree, q, cities)
@@ -228,30 +229,22 @@ object TreeSpanner {
       // If it produces a loop, skip it.
       // Do this repeatedly, all the way until all cities are connected.
       val next = q.dequeue()
-
-      // TAODEBUG:
-      print("[NEXT]")
-      next.prettyPrint()
-
       val tree_ = tree.addLink(next)
-      if (tree_.isLooped()) {
-        // TAODEBUG:
-        println(Console.RED + " [looped]" + Console.RESET)
 
+      // format: OFF -- The cascaded IF statement is tangled by the formatter.
+      if (tree_.isLooped()) {
         growSpanningTree(tree, q, cities)
-      } else {
+      } 
+      else {
         // Check if the resultant tree is maximum?
-        if (tree_.orphanCities().size == cities.length) {
+        if (tree_.orphanCities().size == cities.length)
           // Finished! All cities have connections attached
-          // TAODEBUG:
-          println(Console.GREEN + " [All connected!]" + Console.RESET)
           tree_
-        } else {
-          println(" [...]")
+        else
           growSpanningTree(tree_, q, cities)
-        }
       }
     }
+    // format: ON
   }
 }
 
