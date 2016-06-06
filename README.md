@@ -11,12 +11,15 @@ as its only data source.
 ## Prerequisites
 
 The project is built with `Scala`. All you need to compile and run 
-the project is listed as follows. The project itself is not 
-specifically configured for any particular IDE so using 
-just `sbt` to build and run the project is fine.
+the project is listed as follows:
 
-- [Scala](http://www.scala-lang.org/download/)
-- [Apache Spark](http://spark.apache.org/downloads.html)
+- sbt, the [Scala Build Tool](http://www.scala-sbt.org/download.html)
+
+The project itself is not specifically configured for any particular IDE, if
+you like to use one you should install its appropriate sbt plugin globally
+instead of adding it to every project you touch.
+
+Simply run `sbt run` to compile and run the project.
 
 ## License
 
