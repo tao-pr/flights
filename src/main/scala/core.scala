@@ -83,6 +83,18 @@ object Core extends App {
   }
 
   prepareDatabase()
-  ///findBestRoutes()
-  findSpanningRoutes()
+  println()
+  println(Console.MAGENTA + " a) " + Console.RESET + "Finding best routes")
+  println(Console.MAGENTA + " b) " + Console.RESET + "Finding spanning routes (tree)")
+  val option = readLine("Which one to play? (a/b) :")
+
+  option match {
+    case "a" => findBestRoutes()
+    case "b" => findSpanningRoutes()
+    case _ => {
+      println("Unknown option, go for best route finding then...")
+      findBestRoutes()
+    }
+  }
+
 }
