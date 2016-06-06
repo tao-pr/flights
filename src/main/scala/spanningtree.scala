@@ -48,31 +48,29 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
    */
   private def isLoopableFrom(city: String, prevs: List[String]): Boolean = {
     // Ignore self-loop
-    val departures = links
-      .filter(_.cityDest == city)
+    val destinations = links.filter(_.citySrc == city).map(_.cityDest)
 
-    if (prevs.length > 2) {
+    if (prevs.length < 2)
+      // If too short traversal path to examine, go further
+      destinations
+        .filter { (c) => c != city && !prevs.contains(c) }
+        .exists { (c) => isLoopableFrom(c, prevs.::(city)) }
+    else {
       val origin = prevs.last
       val prev = prevs.head
-      // Ignore returning legs
-      val candidates = departures.filter((d) =>
-        d.cityDest != prev && !prevs.contains(d.cityDest))
+      val candidates = destinations.filter((d) =>
+        d != prev && !prevs.contains(d))
 
       // No further path we can take, obviously no loop presents
       if (candidates.length == 0)
         false
       // If there exists a link which loops back to the origin city,
       // it is considered a loop.
-      else if (candidates.exists(_.cityDest == origin))
+      else if (candidates.exists(_ == origin))
         true
       // Otherwise, examine further links
       else
-        candidates.exists { (c) => isLoopableFrom(c.cityDest, prevs.::(city)) }
-    } else {
-      // Too short traversal path to examine, go further
-      cities
-        .filter(_ != city)
-        .exists { (c) => isLoopableFrom(c, prevs.::(city)) }
+        candidates.exists { (c) => isLoopableFrom(c, prevs.::(city)) }
     }
   }
 
