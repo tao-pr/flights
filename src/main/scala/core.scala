@@ -66,7 +66,6 @@ object Core extends App {
   }
 
   def findSpanningRoutes() {
-    // TAOTODO:
     println("Let's find spanning routes")
     while (true) {
       // Prompt the user for 3~5 cities

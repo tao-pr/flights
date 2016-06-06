@@ -197,11 +197,6 @@ object TreeSpanner {
       (city) => Await.result(OpenFlightsDB.findAirports(city), 20.seconds)
     }
 
-    // TAODEBUG:
-    println(Console.GREEN + "Generating spanning tree of: " + Console.RESET)
-    cities foreach println
-    println(Console.GREEN + s"${airports.length} associated airports" + Console.RESET)
-
     // Find all possible city links which connect
     // the given set of cities altogether.
     var q = PriorityQueue.empty[CityLink](implicitly[Ordering[CityLink]])
@@ -236,8 +231,8 @@ object TreeSpanner {
         growSpanningTree(tree, q, cities)
       } 
       else {
-        // Check if the resultant tree is maximum?
-        if (tree_.orphanCities().size == cities.length)
+        // Check if the resultant tree is maximally spanned?
+        if (tree_.orphanCities().size == 0)
           // Finished! All cities have connections attached
           tree_
         else

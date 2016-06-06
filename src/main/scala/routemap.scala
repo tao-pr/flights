@@ -213,10 +213,6 @@ object RouteMap {
    * Expand further routes beginning from the specified airport
    */
   private def expandRoutes(srcAirport: Airport, destAirportCode: String, cityFinalDest: String, skipCities: Set[String], routes: Seq[Route], maxConnection: Int, straightDistance: Float): Future[Seq[ConnectedRoutes]] = {
-    // TAOTODO: Ignore if the route will be extended 
-    // even farther to the final city 
-    // if we choose this route
-
     // Treat this as a single common route
     // operated by multiple airlines
     val airlines = routes.map(_.airlineCode).toList
