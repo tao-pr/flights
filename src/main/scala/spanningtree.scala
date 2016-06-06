@@ -52,10 +52,10 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
       // it is considered a loop.
       (candidates.exists((c) => cityOfAirport(c) == origin)) ||
         // Otherwise, examine further links
-        candidates.exists { (c) => isLoopableFrom(c, city +: prevs) }
+        candidates.exists { (c) => isLoopableFrom(c, prevs.::(city)) }
     } else {
       // Too short traversal path to examine, go further
-      cities.exists { (c) => isLoopableFrom(c, city +: prevs) }
+      cities.exists { (c) => isLoopableFrom(c, prevs.::(city)) }
     }
   }
 
@@ -83,6 +83,13 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
       .city
   }
 
+  /**
+   * Add a new route to the spanning tree
+   */
+  def addRoute(route: Route): SpanningTree = {
+    SpanningTree(cities, airports, links.::(route))
+  }
+
 }
 
 /**
@@ -93,7 +100,6 @@ case class CityLink(citySrc: String, cityDest: String, airports: Map[String, Air
   def compare(that: CityLink): Int = {
     distance.compareTo(that.distance)
   }
-
 }
 
 object FindCityLink {
@@ -178,9 +184,32 @@ object TreeSpanner {
     }
 
     // Perform Kruskal's algorithm
-    // TAOTODO:
+    val tree = SpanningTree(cities.toSet, airports, List[Route]())
+    growSpanningTree(tree, q)
+  }
 
-    SpanningTree(cities.toSet, airports, List[Route]())
+  private def growSpanningTree(tree: SpanningTree, q: PriorityQueue[CityLink]): SpanningTree = {
+    if (q.length == 0)
+      tree
+    else {
+      // Add the first link candidate to the spanning tree.
+      // If it produces a loop, skip it.
+      // Do this repeatedly, all the way until all cities are connected.
+      val next = q.dequeue()
+
+      // List routes which are subset of the given CityLink
+      val routes = Await.result(next.routes, 20.seconds)
+
+      val tree_ = routes.foldLeft(tree) { (t, r) =>
+        t.addRoute(r)
+      }
+
+      if (tree_.isLooped())
+        growSpanningTree(tree, q)
+      else
+        // TAOTODO: Check if the resultant tree is maximum?
+        growSpanningTree(tree_, q)
+    }
   }
 }
 
