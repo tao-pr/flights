@@ -201,7 +201,10 @@ object RouteMap {
         }
         // format: ON
 
-        Future.reduce(routes)(_ ++ _)
+        if (routes.isEmpty)
+          Future.successful(Nil)
+        else
+          Future.reduce(routes)(_ ++ _)
       }
     }
   }
