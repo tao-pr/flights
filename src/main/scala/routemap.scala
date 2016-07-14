@@ -53,8 +53,16 @@ case class ConnectedRoutes(routes: Seq[AirportLink]) {
    * airport of the connected routes, in meters.
    */
   def displacement: Float =
-    if (routes.length < 2) 0 // TODO: Isn't length == 1 possible for a direct flight?
-    else {
+    if (routes.length < 1)
+      0F
+    else if (routes.length == 1) { // A single hop
+      Geo.distance(
+        routes.head.sourceAirport.lat,
+        routes.head.sourceAirport.lng,
+        routes.head.destAirport.lat,
+        routes.head.destAirport.lng
+      )
+    } else { // Connected hops
       val origin = routes.head.sourceAirport
       val destination = routes.last.destAirport
       Geo.distance(origin.lat, origin.lng, destination.lat, destination.lng)

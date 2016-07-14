@@ -18,6 +18,7 @@ object Core extends App {
       job2 <- OpenFlightsDB.populateAirports(RawDataset.airports)
       job3 <- OpenFlightsDB.populateRoutes(RawDataset.routes)
     } yield (job1, job2, job3)
+    // TAOTODO: Above, better to use Future.sequence ?
 
     // Make sure all data has been imported
     Await.result(importJobs, 100.seconds)
