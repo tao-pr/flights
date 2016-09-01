@@ -91,14 +91,15 @@ object Core extends App {
   def visualiseMap(tree: SpanningTree) {
     import java.io._
     import sys.process._
+    import scala.language.postfixOps
 
     // Generate a JSON containing the visualisable spanning tree
     val jsonStr = tree.toJSON
 
     // Export the spanning tree JSON to a physical .JSON file
     val filePath = new java.io.File(".").getCanonicalPath + "/tree.json"
-    val file = new File(filePath)
-    val writer = new BufferedWriter(new FileWriter(file))
+    val file     = new File(filePath)
+    val writer   = new BufferedWriter(new FileWriter(file))
     writer.write(jsonStr)
     writer.close()
 

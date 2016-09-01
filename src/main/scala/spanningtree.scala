@@ -2,6 +2,8 @@ package flights
 
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
+import net.liftweb.json._
+import net.liftweb.json.Serialization.write
 import scala.Either
 import scala.collection.immutable.{ Iterable }
 import scala.collection.mutable.PriorityQueue
@@ -45,7 +47,8 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
    * @return {String} JSON string which represents the tree
    */
   def toJSON(): String = {
-    // TAOTODO:
+    implicit val format = DefaultFormats
+    write(this)
   }
 
   /**
