@@ -42,6 +42,7 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
 
   /**
    * Export the spanning tree to a JSON string
+   * @return {String} JSON string which represents the tree
    */
   def toJSON(): String = {
     // TAOTODO:

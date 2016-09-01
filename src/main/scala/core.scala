@@ -97,8 +97,8 @@ object Core extends App {
 
     // Export the spanning tree JSON to a physical .JSON file
     val filePath = new java.io.File(".").getCanonicalPath + "/tree.json"
-    val file     = new File(filePath)
-    val writer   = new BufferedWriter(new FileWriter(file))
+    val file = new File(filePath)
+    val writer = new BufferedWriter(new FileWriter(file))
     writer.write(jsonStr)
     writer.close()
 
