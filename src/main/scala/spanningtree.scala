@@ -41,6 +41,13 @@ case class SpanningTree(cities: Set[String], airports: Seq[Airport], links: List
   }
 
   /**
+   * Export the spanning tree to a JSON string
+   */
+  def toJSON(): String = {
+    // TAOTODO:
+  }
+
+  /**
    * Check whether traversing from the specified city
    * may loop back to itself without repeating the same route.
    * @param {String} City to start traversal

@@ -78,8 +78,32 @@ object Core extends App {
       val tree = TreeSpanner.minSpanningTree(cities)
       tree.prettyPrint()
 
+      // Ask the user if they want to visualise the spanning routes
+      println(Console.CYAN + "Do you also want to see the spanning tree on the map?" + Console.RESET)
+      val ans = readLine(Console.CYAN + "(y/n) : " + Console.RESET)
+      if (ans == "y")
+        visualiseMap(tree)
+
       println(Console.GREEN + "Try again, or Ctrl + C to quit" + Console.RESET)
     }
+  }
+
+  def visualiseMap(tree: SpanningTree) {
+    import java.io._
+    import sys.process._
+
+    // Generate a JSON containing the visualisable spanning tree
+    val jsonStr = tree.toJSON
+
+    // Export the spanning tree JSON to a physical .JSON file
+    val filePath = new java.io.File(".").getCanonicalPath + "/tree.json"
+    val file     = new File(filePath)
+    val writer   = new BufferedWriter(new FileWriter(file))
+    writer.write(jsonStr)
+    writer.close()
+
+    // Trigger the output HTML to render
+    "open ./tree.html" !
   }
 
   prepareDatabase()
