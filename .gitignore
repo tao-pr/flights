@@ -1,3 +1,4 @@
 # sbt generated artifacts
 target/
-html/tree.json
+html/js/tree.js
+html/js/gapi.js
