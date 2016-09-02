@@ -95,10 +95,10 @@ object Core extends App {
 
     // Generate a JSON containing the visualisable spanning tree
     val jsonStr = tree.toJSON
-    val jsCode  = s"function getMST(){ return ${jsonStr} }"
+    val jsCode = s"function getMST(){ return ${jsonStr} }"
 
-    // Export the spanning tree JSON to a physical .JSON file
-    val filePath = new java.io.File(".").getCanonicalPath + "html/tree.json"
+    // Export the spanning tree JSON to a physical JS file (wrapped within a function)
+    val filePath = new java.io.File(".").getCanonicalPath + "/html/js/tree.js"
     val file = new File(filePath)
     val writer = new BufferedWriter(new FileWriter(file))
     writer.write(jsCode)
