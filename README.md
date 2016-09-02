@@ -40,6 +40,15 @@ to compute than fewer links.
 
 ## b) Spanning routes
 
+>**Prerequisite:** To enable Google Map visualisation, an API key needs 
+to be store in `html/js/gapi.js`. See the following example:
+
+**html/js/gapi.js**
+
+```javascript
+function getAPIKey(){ return 'AIzaSyD*************'}
+```
+
 Given a list of multiple cities, the program creates a 
 [Minimum Spanning Tree](https://en.wikipedia.org/wiki/Minimum_spanning_tree) 
 which connects all cities together with minimal total distances.
