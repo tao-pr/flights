@@ -1,0 +1,120 @@
+<html>
+  <head>
+    <title>Spanning Tree</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+    <script type="text/javascript" src="./js/tree.js"></script>
+    <script type="text/javascript" src="./js/gapi.js"></script>
+    <script>
+      var map = null;
+      var mst = getMST();
+      var styles = [
+        {
+          featureType:'administrative',
+          stylers:[{visibility:'off'}]
+        },
+        {
+          featureType:'water',
+          elementType:'labels',
+          stylers:[{visibility:'off'}]
+        },
+        {
+          featureType: 'water',
+          stylers: [{color: '#3F3F3F'}]
+        },
+        {
+          featureType: 'landscape',
+          stylers: [{color:'#000000'}]
+        }
+        /*{
+          featureType:'all',
+          stylers:[{hue:'#3055CC'}]
+        }*/
+      ]
+
+      function initMap() {
+        console.log('Initialising GoogleMap...');
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 3,
+          center: {lat: mst.airports[0].lat, lng: mst.airports[0].lng},
+          mapTypeId: google.maps.MapTypeId.TERRAIN
+        });
+        map.setOptions({styles:styles})
+
+        // Render MST
+        renderMST(mst);
+      }
+
+      function makeGoogleCoord(coord){
+        return new google.maps.LatLng(coord[0],coord[1])
+      }
+
+      function markCircle(center){
+        var cityCircle = new google.maps.Circle({
+            strokeColor: '#00C720',
+            strokeOpacity: 0.9,
+            strokeWeight: 2,
+            fillColor: '#00EE30',
+            fillOpacity: 0.70,
+            map: map,
+            center: center,
+            radius: 100000
+          });
+      }
+
+      function renderMST(tree){
+        // Draw city coordinates
+        var cities = {}
+        tree.cities.forEach((c) => {
+          var airports = tree.airports.filter((a) => a.city==c);
+          if (airports.length>0){
+            var a     = airports[0];
+            var coord = makeGoogleCoord([a.lat, a.lng]);
+            // Memorise the mapping from [City] -> [Coord]
+            cities[c] = coord;
+            console.log(c, a);
+            // Draw a circle at the location which represents a city
+            markCircle(coord);
+          }
+        })
+
+        // Draw routes
+        var links = tree.links.map((l) => {
+          var path = new google.maps.Polyline({
+                      path:          [
+                        cities[l.citySrc],
+                        cities[l.cityDest]
+                      ],
+                      geodesic:      true,
+                      strokeColor:   '#009000',
+                      strokeOpacity: 1,
+                      strokeWeight:  1
+                    })
+          path.setMap(map);
+        })
+      }
+
+    
+    $(document).ready(function(){
+      
+      // Load Google Map visualisation API
+      console.log('Injecting Google Map API ...');
+      var script = document.createElement('script');
+      var url = "https://maps.googleapis.com/maps/api/js?key=";
+      url += getAPIKey();
+      url += "&libraries=visualization&callback=initMap";
+      script.setAttribute('src',url);
+      script.setAttribute('async','');
+      script.setAttribute('defer','');
+      document.head.appendChild(script);
+
+    })
+    </script>
+  </head>
+  <body style="width:100%;height:100%">
+    <div id="fork">
+      
+    </div>
+    <div id="map" style="width:100%;height:100%"></div>
+  </body>
+</script>
