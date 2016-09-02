@@ -1,2 +1,3 @@
 # sbt generated artifacts
 target/
+html/tree.json

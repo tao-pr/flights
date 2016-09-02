@@ -97,14 +97,14 @@ object Core extends App {
     val jsonStr = tree.toJSON
 
     // Export the spanning tree JSON to a physical .JSON file
-    val filePath = new java.io.File(".").getCanonicalPath + "/tree.json"
-    val file     = new File(filePath)
-    val writer   = new BufferedWriter(new FileWriter(file))
+    val filePath = new java.io.File(".").getCanonicalPath + "html/tree.json"
+    val file = new File(filePath)
+    val writer = new BufferedWriter(new FileWriter(file))
     writer.write(jsonStr)
     writer.close()
 
     // Trigger the output HTML to render
-    "open ./tree.html" !
+    "open html/tree.html" !
   }
 
   prepareDatabase()
